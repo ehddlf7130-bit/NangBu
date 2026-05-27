@@ -1,10 +1,13 @@
 import { Stack } from 'expo-router';
 
-// 마일스톤 4에서 하단 탭(Tabs)으로 교체 예정
 export default function MainLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="register/category" />
+      <Stack.Screen name="register/new" />
+      <Stack.Screen name="fridge/index" />
+      <Stack.Screen name="fridge/[itemId]" />
     </Stack>
   );
 }

@@ -333,3 +333,19 @@ CREATE POLICY "notifications: update own (mark as read)"
   TO authenticated
   USING (recipient_id = auth.uid())
   WITH CHECK (recipient_id = auth.uid());
+
+
+-- ================================================================
+-- 7. 역할별 테이블 접근 권한 (GRANT)
+--    RLS는 "어떤 행"을 허용할지 제어하고,
+--    GRANT는 "테이블 자체"에 접근할 수 있는지 제어한다.
+--    GRANT 없이 RLS만 있으면 "permission denied for table" 오류 발생.
+-- ================================================================
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles      TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.items         TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.friendships   TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.comments      TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.notifications TO authenticated;

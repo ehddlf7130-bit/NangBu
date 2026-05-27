@@ -1,0 +1,79 @@
+import { supabase } from './supabase';
+import type { Item, ItemFormValues } from '@/types/item';
+
+export function extractErrorMessage(e: unknown): string {
+  if (e && typeof e === 'object') {
+    const err = e as Record<string, unknown>;
+    if (typeof err.message === 'string') return err.message;
+    if (typeof err.details === 'string') return err.details;
+  }
+  if (e instanceof Error) return e.message;
+  return String(e);
+}
+
+export async function fetchMyItems(userId: string): Promise<Item[]> {
+  const { data, error } = await supabase
+    .from('items')
+    .select('*')
+    .eq('owner_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchItem(itemId: string): Promise<Item> {
+  const { data, error } = await supabase
+    .from('items')
+    .select('*')
+    .eq('id', itemId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createItem(
+  userId: string,
+  values: ItemFormValues,
+): Promise<Item> {
+  const { data, error } = await supabase
+    .from('items')
+    .insert({
+      owner_id: userId,
+      name: values.name,
+      category: values.category,
+      storage: values.storage,
+      storage_tip: values.storage_tip || null,
+      expire_date: values.expire_date || null,
+      quantity: values.quantity,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateItem(
+  itemId: string,
+  values: ItemFormValues,
+): Promise<Item> {
+  const { data, error } = await supabase
+    .from('items')
+    .update({
+      name: values.name,
+      category: values.category,
+      storage: values.storage,
+      storage_tip: values.storage_tip || null,
+      expire_date: values.expire_date || null,
+      quantity: values.quantity,
+    })
+    .eq('id', itemId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteItem(itemId: string): Promise<void> {
+  const { error } = await supabase.from('items').delete().eq('id', itemId);
+  if (error) throw error;
+}
