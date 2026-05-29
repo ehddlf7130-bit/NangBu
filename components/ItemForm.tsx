@@ -18,6 +18,8 @@ interface ItemFormProps {
   mode: ItemFormMode;
   initialValues?: Partial<ItemFormValues>;
   onSubmit?: (values: ItemFormValues) => Promise<void>;
+  // false면 내부 ScrollView 없이 렌더 → 바깥 스크롤(코멘트 등)에 얹어 쓸 때 사용. 기본 true.
+  scrollable?: boolean;
 }
 
 const STORAGE_OPTIONS: StorageType[] = ['fridge', 'freezer', 'room'];
@@ -31,7 +33,12 @@ const DEFAULT_VALUES: ItemFormValues = {
   quantity: 1,
 };
 
-export default function ItemForm({ mode, initialValues, onSubmit }: ItemFormProps) {
+export default function ItemForm({
+  mode,
+  initialValues,
+  onSubmit,
+  scrollable = true,
+}: ItemFormProps) {
   const [values, setValues] = useState<ItemFormValues>({
     ...DEFAULT_VALUES,
     ...initialValues,
@@ -73,12 +80,8 @@ export default function ItemForm({ mode, initialValues, onSubmit }: ItemFormProp
     }
   }
 
-  return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
+  const body = (
+    <>
       <Field label="이름 *">
         <TextInput
           style={[styles.input, isReadonly && styles.inputDisabled]}
@@ -197,6 +200,21 @@ export default function ItemForm({ mode, initialValues, onSubmit }: ItemFormProp
           )}
         </TouchableOpacity>
       )}
+    </>
+  );
+
+  // scrollable=false면 바깥 스크롤에 얹기 위해 ScrollView 없이 View로 감싼다.
+  if (!scrollable) {
+    return <View style={styles.container}>{body}</View>;
+  }
+
+  return (
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      {body}
     </ScrollView>
   );
 }

@@ -1,11 +1,15 @@
+import CommentList from '@/components/CommentList';
 import ItemForm from '@/components/ItemForm';
-import { deleteItem, fetchItem, itemToFormValues, updateItem } from '@/lib/items';
+import { fetchComments } from '@/lib/comments';
+import { deleteItem, extractErrorMessage, fetchItem, itemToFormValues, updateItem } from '@/lib/items';
+import type { Comment } from '@/types/comment';
 import type { Item, ItemFormValues } from '@/types/item';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -18,12 +22,24 @@ export default function ItemDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentLoading, setCommentLoading] = useState(true);
+  const [commentError, setCommentError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!itemId) return;
     fetchItem(itemId)
       .then(setItem)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : '불러오기 실패'))
       .finally(() => setLoading(false));
+  }, [itemId]);
+
+  useEffect(() => {
+    if (!itemId) return;
+    fetchComments(itemId)
+      .then(setComments)
+      .catch((e: unknown) => setCommentError(extractErrorMessage(e)))
+      .finally(() => setCommentLoading(false));
   }, [itemId]);
 
   async function handleUpdate(values: ItemFormValues) {
@@ -77,7 +93,17 @@ export default function ItemDetailScreen() {
           <Text style={styles.deleteText}>삭제</Text>
         </TouchableOpacity>
       </View>
-      <ItemForm mode="edit" initialValues={initialValues} onSubmit={handleUpdate} />
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ItemForm mode="edit" initialValues={initialValues} onSubmit={handleUpdate} scrollable={false} />
+        <View style={styles.commentSection}>
+          <Text style={styles.commentTitle}>코멘트</Text>
+          <CommentList comments={comments} loading={commentLoading} error={commentError} />
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -103,5 +129,9 @@ const styles = StyleSheet.create({
     borderColor: '#fecaca',
   },
   deleteText: { color: '#ef4444', fontSize: 14, fontWeight: '600' },
+  body: { flex: 1 },
+  bodyContent: { paddingBottom: 32 },
+  commentSection: { paddingHorizontal: 20, paddingTop: 4, gap: 12 },
+  commentTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
   errorText: { color: '#ef4444', fontSize: 15 },
 });

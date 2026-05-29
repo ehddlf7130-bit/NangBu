@@ -10,6 +10,7 @@ export default function MainLayout() {
       <Stack.Screen name="fridge/[itemId]" />
       <Stack.Screen name="friends/index" />
       <Stack.Screen name="friends/[friendId]" />
+      <Stack.Screen name="notifications" />
     </Stack>
   );
 }
