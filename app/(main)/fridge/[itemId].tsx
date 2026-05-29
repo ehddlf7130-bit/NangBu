@@ -1,5 +1,5 @@
 import ItemForm from '@/components/ItemForm';
-import { deleteItem, fetchItem, updateItem } from '@/lib/items';
+import { deleteItem, fetchItem, itemToFormValues, updateItem } from '@/lib/items';
 import type { Item, ItemFormValues } from '@/types/item';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -67,14 +67,7 @@ export default function ItemDetailScreen() {
     );
   }
 
-  const initialValues: ItemFormValues = {
-    name: item.name,
-    category: item.category,
-    storage: item.storage,
-    storage_tip: item.storage_tip ?? '',
-    expire_date: item.expire_date ?? '',
-    quantity: item.quantity,
-  };
+  const initialValues: ItemFormValues = itemToFormValues(item);
 
   return (
     <View style={styles.container}>

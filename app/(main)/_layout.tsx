@@ -8,6 +8,8 @@ export default function MainLayout() {
       <Stack.Screen name="register/new" />
       <Stack.Screen name="fridge/index" />
       <Stack.Screen name="fridge/[itemId]" />
+      <Stack.Screen name="friends/index" />
+      <Stack.Screen name="friends/[friendId]" />
     </Stack>
   );
 }

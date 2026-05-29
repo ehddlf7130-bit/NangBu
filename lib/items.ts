@@ -1,6 +1,18 @@
 import { supabase } from './supabase';
 import type { Item, ItemFormValues } from '@/types/item';
 
+/** items 행을 ItemForm이 받는 폼 값으로 변환한다 (조회·수정 화면 공통). */
+export function itemToFormValues(item: Item): ItemFormValues {
+  return {
+    name: item.name,
+    category: item.category,
+    storage: item.storage,
+    storage_tip: item.storage_tip ?? '',
+    expire_date: item.expire_date ?? '',
+    quantity: item.quantity,
+  };
+}
+
 export function extractErrorMessage(e: unknown): string {
   if (e && typeof e === 'object') {
     const err = e as Record<string, unknown>;
