@@ -137,36 +137,58 @@ export const CATEGORIES = ['과일', '육류', '유제품'];
 
 ## 6. 화면 구조 (Expo Router)
 
+> 아래는 **실제 구현 상태**다. ✅ 구현 · ⬜ 미구현. (컴포넌트/상수/라이브러리/타입 디렉터리는 `app/`이 아니라 **프로젝트 루트**에 있다.)
+
 ```
 app/
-  index.tsx                  # 앱 실행 → 세션 검사 → 분기
+  _layout.tsx                # ✅ AuthProvider + 세션 감시(AuthRedirect) + Stack
+  index.tsx                  # ✅ 세션 검사 → <Redirect> (main/login)
   (auth)/
-    login.tsx                # 로그인
-    signup.tsx               # 회원가입
-    find-id.tsx              # 아이디 찾기
-    find-password.tsx        # 비밀번호 찾기
+    _layout.tsx              # ✅ 인증 그룹 Stack
+    login.tsx                # ✅ 로그인
+    signup.tsx               # ✅ 회원가입
+    find-id.tsx              # ⬜ 미구현 (보류)
+    find-password.tsx        # ⬜ 미구현 (보류)
   (main)/
-    _layout.tsx              # 하단 탭 또는 메인 메뉴
-    index.tsx                # 메인 화면 (6개 메뉴 진입점)
+    _layout.tsx              # ✅ 메인 그룹 Stack (헤더 숨김)
+    index.tsx                # ✅ 6개 메뉴 그리드 + 로그아웃 버튼
     register/
-      category.tsx           # 카테고리 선택
+      category.tsx           # ✅ 카테고리 선택
+      new.tsx                # ✅ ItemForm(create) — 식품 등록 입력 (문서에 없던 실제 파일)
     fridge/
-      index.tsx              # 나의 냉장고 품목 목록
-      [itemId].tsx           # 개별 품목 정보 (코멘트 표시)
+      index.tsx              # ✅ 나의 냉장고 품목 목록
+      [itemId].tsx           # ✅ 개별 품목 수정(edit) + 코멘트 목록 표시
     friends/
-      index.tsx              # 친구 목록 / 친구 추가
-      [friendId].tsx         # 친구의 냉장고 보기 (읽기 전용)
-    notifications.tsx        # 알림창
-    settings.tsx             # 설정 (냉장고 공개 여부 등)
-    chatbot.tsx              # AI 챗봇 (2차 — "준비 중" placeholder)
-  components/
-    ItemForm.tsx             # 식재료 데이터 입력 공통 컴포넌트 (핵심)
-  constants/
-    categories.ts            # 카테고리 상수 배열 (단일 출처, 5-1 참조)
+      index.tsx              # ✅ 친구 목록 / 친구 추가
+      [friendId].tsx         # ✅ 친구 냉장고(readonly) + 코멘트 작성 모달
+    notifications.tsx        # ✅ 알림창
+    settings.tsx             # ⬜ 미구현 (냉장고 공개 토글 자리, §10 참조)
+    chatbot.tsx              # ⬜ 미구현 (2차 placeholder, §10 참조)
+
+components/                  # (프로젝트 루트)
+  ItemForm.tsx               # ✅ create/edit/readonly 3모드 공통 폼 (scrollable 옵션)
+  CommentList.tsx            # ✅ 코멘트 목록 표시 공통 컴포넌트
+constants/
+  categories.ts              # ✅ ['과일','육류','유제품'] (단일 출처, 5-1 참조)
+  theme.ts                   # ✅ 색상/폰트 테마 상수 (현재 일부만 사용)
+contexts/
+  AuthContext.tsx            # ✅ 세션/로그인/로그아웃 컨텍스트
+lib/
+  supabase.ts                # ✅ Supabase 클라이언트 (SecureStore 세션 저장)
+  items.ts                   # ✅ 품목 CRUD + itemToFormValues/extractErrorMessage
+  friends.ts                 # ✅ 친구 조회/추가 (fetchFriends/addFriend/...)
+  comments.ts                # ✅ 코멘트 조회/작성
+  notifications.ts           # ✅ 알림 조회/읽음 처리
+  format.ts                  # ✅ 날짜 포맷 유틸 (formatDateTime)
+types/
+  item.ts / friend.ts / comment.ts / notification.ts   # ✅ 도메인 타입
+supabase_schema.sql          # ✅ 테이블 + 인덱스 + RLS + GRANT + 트리거 일괄
 ```
 
+> 메뉴('설정', 'AI 챗봇')는 `/(main)/settings`·`/(main)/chatbot`으로 링크하지만 해당 화면 파일이 아직 없어 현재 탭하면 이동이 실패한다(§10에서 해결).
+
 ### 6-1. 진입 흐름
-`index.tsx`에서 SecureStore의 세션을 확인한다. 유효하면 `(main)`으로, 아니면 `(auth)/login`으로 보낸다.
+세션은 `contexts/AuthContext.tsx`가 Supabase `onAuthStateChange`로 관리하고(토큰은 SecureStore에 저장, 네트워크 지연 대비 5초 타임아웃 안전망 포함), `app/_layout.tsx`의 `AuthRedirect`가 세션 유무에 따라 `(auth)` ↔ `(main)`을 자동 전환한다. `app/index.tsx`는 보조 안전망으로 `<Redirect>` 분기를 한 번 더 수행한다.
 
 ### 6-2. 식품 등록 흐름
 메인 → 식품 등록 → 카테고리 선택(`constants/categories.ts`의 배열을 렌더링) → `ItemForm`(등록 모드) → 저장 시 `items`에 insert → 나의 냉장고 목록으로 복귀.
@@ -189,29 +211,37 @@ app/
 
 ## 7. 구현 순서 (권장 마일스톤)
 
-1. **프로젝트 셋업**: Expo + TypeScript + Expo Router + Supabase 클라이언트 연결, `.env` 구성
-2. **DB 스키마**: 위 테이블 생성 + RLS 정책 적용 (SQL 파일로 관리)
-3. **인증**: 회원가입/로그인/세션 유지 → 진입 분기 동작
-4. **식품 등록 + 나의 냉장고**: ItemForm(create/edit), 목록, 개별 조회, 삭제
-5. **친구 기능**: 친구 추가/목록, 친구 냉장고 읽기 전용 보기
-6. **코멘트 + 인앱 알림**: 코멘트 작성, notifications 생성 트리거, 알림창, 알림 클릭 이동
-7. **설정**: 냉장고 공개 여부 토글, 로그아웃
-8. **마감**: 빈 상태 처리, 로딩/에러 처리, 챗봇 placeholder
+실제 구현 현황은 다음과 같다. **✅ 완료 · 🟡 부분 완료 · ⬜ 미구현**. 주요 파일은 실제 코드 기준.
+
+1. ✅ **프로젝트 셋업** — `package.json`, `app.json`, `lib/supabase.ts`(SecureStore 세션), `app/_layout.tsx`, `.env`(`EXPO_PUBLIC_SUPABASE_URL`/`EXPO_PUBLIC_SUPABASE_ANON_KEY`)
+2. ✅ **DB 스키마** — `supabase_schema.sql` (테이블 + 인덱스 + RLS + GRANT + 트리거 일괄)
+3. ✅ **인증** — `contexts/AuthContext.tsx`, `app/(auth)/login.tsx`, `app/(auth)/signup.tsx`, `app/index.tsx`, `app/_layout.tsx`(AuthRedirect)
+4. ✅ **식품 등록 + 나의 냉장고** — `components/ItemForm.tsx`(create/edit/readonly), `lib/items.ts`, `types/item.ts`, `constants/categories.ts`, `app/(main)/register/category.tsx`, `app/(main)/register/new.tsx`, `app/(main)/fridge/index.tsx`, `app/(main)/fridge/[itemId].tsx`
+5. ✅ **친구 기능** — `types/friend.ts`, `lib/friends.ts`, `app/(main)/friends/index.tsx`, `app/(main)/friends/[friendId].tsx`
+6. ✅ **코멘트 + 인앱 알림** — `types/comment.ts`, `types/notification.ts`, `lib/comments.ts`, `lib/notifications.ts`, `lib/format.ts`, `components/CommentList.tsx`, `app/(main)/notifications.tsx` (코멘트 작성: `friends/[friendId].tsx`, 코멘트 목록: `fridge/[itemId].tsx`)
+7. 🟡 **설정** — 로그아웃 ✅(`app/(main)/index.tsx`의 로그아웃 버튼). 냉장고 공개 토글(`fridge_public`) ⬜ 미구현 → §10
+8. ⬜ **마감** — 로딩/에러/빈 상태는 구현된 화면(4~6)에 이미 반영됨. 챗봇 placeholder·설정 화면 미생성, 디버그 로그 정리·전체 마감 점검 남음 → §10
 
 > 각 마일스톤이 끝나면 실제 동작을 확인하고 다음으로 넘어갈 것. 한 번에 전부 만들지 말 것.
+> 디버그용 `console.log`가 일부 화면(`fridge/index.tsx`, `contexts/AuthContext.tsx`, `app/index.tsx` 등)에 남아 있다 — 마감 단계 정리 대상.
 
 ---
 
 ## 8. 놓치기 쉬운 처리 (체크리스트)
 
-- [ ] 품목 삭제 경로 (다 먹은/버린 식재료) — 목록에서 스와이프 또는 상세에서 삭제
-- [ ] 유통기한 표시 — 임박/만료 품목 색상 구분 (자동 알림은 2차)
-- [ ] 친구 추가 시 자기 자신/중복 추가 방지
-- [ ] 냉장고 비공개(fridge_public=false)인 친구 → "공개하지 않음" 안내
-- [ ] 로그아웃 위치 (설정 화면)
-- [ ] 빈 상태 UI (품목 없음, 친구 없음, 알림 없음)
-- [ ] 입력 검증 (이름 필수, 수량 0 이상, 유통기한 형식)
-- [ ] 네트워크 에러 / 로딩 인디케이터
+> 실제 코드 기준 현황. 미완료 항목은 §10 '남은 작업' 참조.
+
+- [x] 품목 삭제 경로 — `fridge/[itemId].tsx` 상세에서 삭제(확인 Alert)
+- [x] 유통기한 표시 — 임박/만료 색상 구분 (`fridge/index.tsx`, `friends/[friendId].tsx`. 자동 알림은 2차)
+- [x] 친구 추가 시 자기 자신/중복 추가 방지 — `lib/friends.ts`의 `addFriend`
+- [x] 냉장고 비공개(`fridge_public=false`) 친구 → "공개하지 않음" 안내 — `friends/[friendId].tsx`
+- [x] 로그아웃 — 구현됨. 단 현재 위치는 **메인 화면**(`(main)/index.tsx`); 설정 화면 생성 시 이동 검토
+- [x] 빈 상태 UI (품목/친구/알림 없음) — 각 목록 화면 EmptyState
+- [x] 입력 검증 (이름 필수, 수량 0 이상, 유통기한 형식) — `ItemForm`의 `validate()`
+- [x] 네트워크 에러 / 로딩 인디케이터 — 각 화면 `ActivityIndicator` + 에러 표시
+- [ ] 냉장고 공개 토글 — 미구현 (설정 화면 필요, §10-1)
+- [ ] 챗봇 placeholder — 미구현 (§10-2)
+- [ ] 디버그 `console.log` 정리 — 일부 화면에 잔존 (§10-2)
 
 ---
 
@@ -229,3 +259,79 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=xxx...
 > - **Secret key** = 기존 service_role key → 마스터 키, 앱·코드에 절대 넣지 말 것
 >
 > 앱에는 Publishable key만 사용한다. Project URL은 대시보드 상단 또는 Settings → API에서 확인.
+
+---
+
+## 10. 남은 작업 (미구현 · 보류)
+
+마일스톤 7의 일부와 8 전체가 남아 있다.
+
+### 10-1. 냉장고 공개 토글 (마일스톤 7)
+- `app/(main)/settings.tsx` 신규 생성 필요.
+- 동작: `profiles.fridge_public`을 토글. 예) `supabase.from('profiles').update({ fridge_public }).eq('id', user.id)`.
+- 권한: profiles의 `update own` RLS가 이미 있어 **추가 정책 불필요**.
+- 메인 메뉴('설정')는 이미 `/(main)/settings`로 링크하지만 화면 파일이 없어 현재 탭하면 이동이 실패한다 → 화면 생성으로 해결.
+- 로그아웃을 이 설정 화면으로 옮길지 함께 결정(현재는 메인 화면에 위치).
+
+### 10-2. 마감 처리 (마일스톤 8)
+- **챗봇 placeholder**: `app/(main)/chatbot.tsx` "준비 중" 화면 (메인 메뉴 'AI 챗봇' 링크 대상, 현재 화면 없음).
+- **로딩/에러/빈 상태**: 구현된 화면(4~6)에는 이미 반영됨. 신규 화면(설정/챗봇)에도 동일 패턴 적용 + 전체 일관성 점검.
+- **디버그 로그 정리**: `fridge/index.tsx`, `contexts/AuthContext.tsx`, `app/index.tsx` 등의 `console.log` 제거.
+- **메뉴-라우트 정합성**: 위 미생성 화면 때문에 메인 메뉴 일부가 동작하지 않음 → 화면 생성으로 정리.
+
+---
+
+## 11. 배운 점 / 트러블슈팅
+
+### 11-1. RLS만으로는 부족 — 테이블 GRANT를 반드시 함께 부여
+- **증상**: RLS 정책을 모두 켰는데도 쿼리 시 `permission denied for table ...` 오류.
+- **원인**: PostgreSQL에서 **RLS(행 단위 보안)** 와 **GRANT(테이블 단위 접근 권한)** 는 별개 레이어다. RLS는 "어떤 행이 보이는가"를, GRANT는 "테이블에 접근할 수 있는가"를 결정한다. GRANT가 없으면 RLS를 평가하기도 전에 거부된다.
+- **해결**: 스키마에서 RLS와 함께 GRANT를 부여한다 (`supabase_schema.sql` §7).
+  ```sql
+  GRANT USAGE ON SCHEMA public TO anon, authenticated;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles      TO authenticated;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON public.items         TO authenticated;
+  -- friendships / comments / notifications 도 동일하게 부여
+  ```
+- **교훈**: Supabase에서 테이블을 만들 때는 ① RLS ENABLE ② 정책 작성 ③ **GRANT 부여** 를 항상 세트로 처리한다.
+
+### 11-2. PostgREST 임베드 — 동일 테이블을 두 번 참조하면 모호
+- `friendships`는 `profiles`를 `requester_id`·`addressee_id`로 **두 번** 참조한다. 이때 `select('..., profiles(...)')` 임베드는 모호해져 실패하거나 FK 이름 힌트가 필요하다.
+- **해결**: `lib/friends.ts`는 FK 이름에 의존하지 않도록 `friendships` 조회 → 상대방 id 수집 → `profiles`를 `.in()`으로 2단계 조회한다.
+- 단일 FK(`comments.author_id → profiles` 등)는 모호하지 않으므로 임베드를 그대로 사용한다(`lib/comments.ts`, `lib/notifications.ts`).
+
+### 11-3. 모달 + 키보드 (KeyboardAvoidingView)
+- iOS `presentationStyle="pageSheet"` 모달에서는 `KeyboardAvoidingView`가 키보드 높이를 잘못 계산해 입력창이 가려진다.
+- **해결**: 풀스크린 모달로 전환 + `behavior`(iOS `padding`/Android `height`) + 입력바를 스크롤 영역의 형제로 고정 + 배경 탭으로 키보드 닫기 (`friends/[friendId].tsx`).
+
+### 11-4. ItemForm 재사용 시 중첩 스크롤
+- `ItemForm`은 내부가 `ScrollView`라, 코멘트 목록과 함께 쌓으면 스크롤이 충돌한다.
+- **해결**: `scrollable` prop(기본 true)을 추가해, 코멘트와 함께 쓸 때는 바깥 스크롤에 얹도록 분리한다 (`components/ItemForm.tsx`).
+
+### 11-5. 알림은 앱이 아니라 DB 트리거가 생성
+- 코멘트 insert 시 `notifications`는 앱이 만들지 않고 `handle_new_comment` 트리거(SECURITY DEFINER)가 생성한다. 앱은 알림을 **읽기/읽음 처리만** 한다(`lib/notifications.ts`).
+
+### 11-6. 세션 유지
+- `lib/supabase.ts`의 SecureStore 어댑터로 토큰을 저장하고, `AuthContext`가 `onAuthStateChange`로 세션을 추적한다(네트워크 지연 대비 5초 타임아웃 안전망 포함).
+
+---
+
+## 12. 향후 확장 아이디어
+
+### 12-1. 친구 수락 알림 (스키마 수정 필요)
+현재 친구 추가는 바로 `accepted`로 처리된다(요청/수락 플로우 미사용). 수락 알림을 도입하려면 `notifications` 스키마를 손봐야 한다.
+- **`type` CHECK 제약 확장**: 현재 `CHECK (type IN ('comment'))` → `'friend_accept'`(또는 `'friend_request'`) 추가.
+- **`item_id` / `comment_id` NOT NULL → NULL 허용**: 코멘트와 무관한 알림은 이 두 컬럼이 없으므로 NULL을 허용하도록 변경.
+- friendships의 status가 `accepted`로 바뀔 때 requester에게 알림을 생성하는 트리거/로직 추가.
+
+### 12-2. 사용자 정의 카테고리
+- 현재 `constants/categories.ts` 코드 상수(단일 출처). 2차에서 별도 `categories` 테이블 도입(§5-1).
+
+### 12-3. 푸시 알림
+- Expo Notifications + 디바이스 토큰 저장. `notifications` 행 생성 시 푸시 발송 연동.
+
+### 12-4. AI 챗봇
+- 보관법/레시피 추천. `chatbot.tsx` placeholder → 실제 모델 연동.
+
+### 12-5. UX/UI 디자인 적용
+- 현재는 기능 위주의 기본 스타일. 디자인 시스템/테마(`constants/theme.ts` 활용), 다크 모드, 아이콘·일러스트, 전환 애니메이션 등 시각적 완성도 향상.
