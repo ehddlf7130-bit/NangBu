@@ -12,7 +12,7 @@ export default function RegisterNewScreen() {
   async function handleSubmit(values: ItemFormValues) {
     if (!user) throw new Error('로그인이 필요합니다.');
     await createItem(user.id, values);
-    router.replace('/(main)/fridge' as never);
+    router.replace('/(main)' as never);
   }
 
   return (

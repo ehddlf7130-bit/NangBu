@@ -10,12 +10,20 @@
 
 -- profiles: auth.users와 1:1 대응. 회원가입 트리거(섹션 3)가 자동 생성.
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id            uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  username      text        UNIQUE NOT NULL,
-  display_name  text        NOT NULL,
-  fridge_public boolean     NOT NULL DEFAULT true,
-  created_at    timestamptz NOT NULL DEFAULT now()
+  id              uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username        text        UNIQUE NOT NULL,
+  display_name    text        NOT NULL,
+  fridge_public   boolean     NOT NULL DEFAULT true,
+  notify_comments boolean     NOT NULL DEFAULT true,  -- 코멘트 알림 수신 여부
+  notify_expiry   boolean     NOT NULL DEFAULT true,  -- 소비기한 임박 알림 (기능은 추후 §13-6)
+  created_at      timestamptz NOT NULL DEFAULT now()
 );
+
+-- 기존 DB에 컬럼이 없을 때를 위한 마이그레이션 (재실행 안전)
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS notify_comments boolean NOT NULL DEFAULT true;
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS notify_expiry boolean NOT NULL DEFAULT true;
 
 -- items: 냉장고 품목
 CREATE TABLE IF NOT EXISTS public.items (
@@ -102,6 +110,17 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- 백필: 트리거 도입 전에 가입했거나 프로필이 누락된 계정에 profiles 행을 채운다.
+-- (SQL Editor는 RLS를 우회하므로 안전하게 실행된다. 재실행 안전)
+INSERT INTO public.profiles (id, username, display_name)
+SELECT u.id,
+       COALESCE(u.raw_user_meta_data->>'username', 'user_' || substr(u.id::text, 1, 8)),
+       COALESCE(u.raw_user_meta_data->>'display_name', split_part(u.email, '@', 1))
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
 
 -- ================================================================
 -- 4. 트리거: 코멘트 삽입 → notifications 자동 생성
@@ -117,14 +136,19 @@ SET search_path = public
 AS $$
 DECLARE
   v_owner_id uuid;
+  v_notify   boolean;
 BEGIN
   SELECT owner_id INTO v_owner_id
   FROM public.items
   WHERE id = NEW.item_id;
 
   IF v_owner_id IS NOT NULL AND v_owner_id <> NEW.author_id THEN
-    INSERT INTO public.notifications (recipient_id, type, item_id, comment_id)
-    VALUES (v_owner_id, 'comment', NEW.item_id, NEW.id);
+    -- 수신자가 코멘트 알림을 꺼두었으면 알림을 생성하지 않는다.
+    SELECT notify_comments INTO v_notify FROM public.profiles WHERE id = v_owner_id;
+    IF COALESCE(v_notify, true) THEN
+      INSERT INTO public.notifications (recipient_id, type, item_id, comment_id)
+      VALUES (v_owner_id, 'comment', NEW.item_id, NEW.id);
+    END IF;
   END IF;
 
   RETURN NEW;
@@ -349,3 +373,49 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.items         TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.friendships   TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.comments      TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.notifications TO authenticated;
+
+
+-- ================================================================
+-- 8. recipes (§13-4) — 사용자가 저장한 레시피 (수동 입력 또는 추후 AI 추천)
+--    테이블 + 인덱스 + RLS + 정책 + GRANT 한 세트. 재실행 안전.
+-- ================================================================
+
+CREATE TABLE IF NOT EXISTS public.recipes (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id   uuid        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title      text        NOT NULL,
+  body       text        NOT NULL DEFAULT '',
+  source     text        NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'ai')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recipes_owner_id ON public.recipes (owner_id);
+
+ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
+
+-- 본인 레시피만 조회
+DROP POLICY IF EXISTS "recipes: select own" ON public.recipes;
+CREATE POLICY "recipes: select own"
+  ON public.recipes FOR SELECT TO authenticated
+  USING (owner_id = auth.uid());
+
+-- 본인 레시피만 등록
+DROP POLICY IF EXISTS "recipes: insert own" ON public.recipes;
+CREATE POLICY "recipes: insert own"
+  ON public.recipes FOR INSERT TO authenticated
+  WITH CHECK (owner_id = auth.uid());
+
+-- 본인 레시피만 수정
+DROP POLICY IF EXISTS "recipes: update own" ON public.recipes;
+CREATE POLICY "recipes: update own"
+  ON public.recipes FOR UPDATE TO authenticated
+  USING (owner_id = auth.uid())
+  WITH CHECK (owner_id = auth.uid());
+
+-- 본인 레시피만 삭제
+DROP POLICY IF EXISTS "recipes: delete own" ON public.recipes;
+CREATE POLICY "recipes: delete own"
+  ON public.recipes FOR DELETE TO authenticated
+  USING (owner_id = auth.uid());
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.recipes TO authenticated;

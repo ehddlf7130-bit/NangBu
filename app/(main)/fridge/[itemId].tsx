@@ -58,7 +58,7 @@ export default function ItemDetailScreen() {
           if (!itemId) return;
           try {
             await deleteItem(itemId);
-            router.replace('/(main)/fridge' as never);
+            router.replace('/(main)' as never);
           } catch (e: unknown) {
             Alert.alert('오류', e instanceof Error ? e.message : '삭제에 실패했습니다.');
           }

@@ -6,6 +6,8 @@ export interface Profile {
   username: string;
   display_name: string;
   fridge_public: boolean;
+  notify_comments: boolean;
+  notify_expiry: boolean;
   created_at: string;
 }
 
