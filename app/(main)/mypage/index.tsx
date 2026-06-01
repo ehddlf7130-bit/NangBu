@@ -20,7 +20,7 @@ type MenuItem = { label: string; route?: string; soon?: boolean };
 const MENU: MenuItem[] = [
   { label: '프로필 수정', route: '/(main)/mypage/profile' },
   { label: '알림 설정', route: '/(main)/mypage/notification-settings' },
-  { label: '기본 소비기한 설정', soon: true },
+  { label: '기본 소비기한 설정', route: '/(main)/mypage/expiry/category' },
   { label: '공지사항', route: '/(main)/mypage/notice' },
 ];
 

@@ -419,3 +419,50 @@ CREATE POLICY "recipes: delete own"
   USING (owner_id = auth.uid());
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.recipes TO authenticated;
+
+
+-- ================================================================
+-- 9. category_expiry (§13-6) — 사용자별 (카테고리 + 보관방식) 기본 소비기한(일수)
+--    테이블 + 인덱스 + RLS + 정책 + GRANT 한 세트. 재실행 안전.
+-- ================================================================
+
+CREATE TABLE IF NOT EXISTS public.category_expiry (
+  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id     uuid        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  category     text        NOT NULL,
+  storage      text        NOT NULL CHECK (storage IN ('fridge', 'freezer', 'room')),
+  default_days int         NOT NULL CHECK (default_days >= 0),
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (owner_id, category, storage)
+);
+
+CREATE INDEX IF NOT EXISTS idx_category_expiry_owner ON public.category_expiry (owner_id);
+
+ALTER TABLE public.category_expiry ENABLE ROW LEVEL SECURITY;
+
+-- 본인 설정만 조회
+DROP POLICY IF EXISTS "category_expiry: select own" ON public.category_expiry;
+CREATE POLICY "category_expiry: select own"
+  ON public.category_expiry FOR SELECT TO authenticated
+  USING (owner_id = auth.uid());
+
+-- 본인 설정만 등록
+DROP POLICY IF EXISTS "category_expiry: insert own" ON public.category_expiry;
+CREATE POLICY "category_expiry: insert own"
+  ON public.category_expiry FOR INSERT TO authenticated
+  WITH CHECK (owner_id = auth.uid());
+
+-- 본인 설정만 수정
+DROP POLICY IF EXISTS "category_expiry: update own" ON public.category_expiry;
+CREATE POLICY "category_expiry: update own"
+  ON public.category_expiry FOR UPDATE TO authenticated
+  USING (owner_id = auth.uid())
+  WITH CHECK (owner_id = auth.uid());
+
+-- 본인 설정만 삭제
+DROP POLICY IF EXISTS "category_expiry: delete own" ON public.category_expiry;
+CREATE POLICY "category_expiry: delete own"
+  ON public.category_expiry FOR DELETE TO authenticated
+  USING (owner_id = auth.uid());
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.category_expiry TO authenticated;

@@ -1,7 +1,8 @@
 import { CATEGORIES } from '@/constants/categories';
+import { addDaysToToday } from '@/lib/expiry';
 import { extractErrorMessage } from '@/lib/items';
 import { type ItemFormValues, STORAGE_LABELS, type StorageType } from '@/types/item';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -20,6 +21,8 @@ interface ItemFormProps {
   onSubmit?: (values: ItemFormValues) => Promise<void>;
   // false면 내부 ScrollView 없이 렌더 → 바깥 스크롤(코멘트 등)에 얹어 쓸 때 사용. 기본 true.
   scrollable?: boolean;
+  // (등록 전용) 카테고리+보관방식으로 기본 소비기한(일수)을 조회. 유통기한이 비어있을 때만 자동 채움.
+  resolveExpiry?: (category: string, storage: StorageType) => Promise<number | null>;
 }
 
 const STORAGE_OPTIONS: StorageType[] = ['fridge', 'freezer', 'room'];
@@ -38,6 +41,7 @@ export default function ItemForm({
   initialValues,
   onSubmit,
   scrollable = true,
+  resolveExpiry,
 }: ItemFormProps) {
   const [values, setValues] = useState<ItemFormValues>({
     ...DEFAULT_VALUES,
@@ -48,6 +52,23 @@ export default function ItemForm({
 
   const isReadonly = mode === 'readonly';
   const submitLabel = mode === 'create' ? '등록' : '수정';
+
+  // 카테고리/보관방식이 정해지면 기본 소비기한을 조회해 유통기한을 자동 채운다.
+  // 단, 유통기한이 비어있을 때만 채워 사용자가 입력/수정한 값은 덮어쓰지 않는다.
+  useEffect(() => {
+    if (!resolveExpiry) return;
+    if (!values.category || !values.storage) return;
+    let active = true;
+    resolveExpiry(values.category, values.storage)
+      .then((days) => {
+        if (!active || days == null) return;
+        setValues((prev) =>
+          prev.expire_date ? prev : { ...prev, expire_date: addDaysToToday(days) },
+        );
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [values.category, values.storage, resolveExpiry]);
 
   function set<K extends keyof ItemFormValues>(key: K, value: ItemFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));

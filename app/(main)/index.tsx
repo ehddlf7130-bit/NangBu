@@ -1,21 +1,36 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { extractErrorMessage, fetchMyItems } from '@/lib/items';
+import { deleteItem, extractErrorMessage, fetchMyItems } from '@/lib/items';
 import type { Item } from '@/types/item';
 import { STORAGE_LABELS } from '@/types/item';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
+// 삭제 확인. 웹에서는 Alert가 동작하지 않아 window.confirm을 사용한다.
+function confirmDelete(name: string, onConfirm: () => void) {
+  const message = `"${name}"을(를) 삭제하시겠습니까?`;
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.confirm(message)) onConfirm();
+    return;
+  }
+  Alert.alert('품목 삭제', message, [
+    { text: '취소', style: 'cancel' },
+    { text: '삭제', style: 'destructive', onPress: onConfirm },
+  ]);
+}
+
 // 로그인 후 첫 화면이자 '냉장고' 탭 = 나의 냉장고 목록.
 export default function FridgeScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +52,19 @@ export default function FridgeScreen() {
     }, [user]),
   );
 
+  function handleDelete(item: Item) {
+    confirmDelete(item.name, async () => {
+      try {
+        await deleteItem(item.id);
+        setItems((prev) => prev.filter((x) => x.id !== item.id));
+      } catch (e: unknown) {
+        const msg = extractErrorMessage(e);
+        if (Platform.OS === 'web' && typeof window !== 'undefined') window.alert(msg);
+        else Alert.alert('삭제 실패', msg);
+      }
+    });
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -57,17 +85,12 @@ export default function FridgeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>나의 냉장고</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/(main)/register/category' as never)}
-          >
-            <Text style={styles.addButtonText}>＋ 추가</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-            <Text style={styles.logoutText}>로그아웃</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push('/(main)/register/category' as never)}
+        >
+          <Text style={styles.addButtonText}>＋ 추가</Text>
+        </TouchableOpacity>
       </View>
       <FlatList
         data={items}
@@ -75,33 +98,40 @@ export default function FridgeScreen() {
         contentContainerStyle={items.length === 0 ? styles.emptyContainer : styles.list}
         ListEmptyComponent={<EmptyState />}
         renderItem={({ item }) => (
-          <ItemRow item={item} onPress={() => router.push(`/(main)/item/${item.id}` as never)} />
+          <ItemRow
+            item={item}
+            onPress={() => router.push(`/(main)/item/${item.id}` as never)}
+            onDelete={() => handleDelete(item)}
+          />
         )}
       />
     </View>
   );
 }
 
-function ItemRow({ item, onPress }: { item: Item; onPress: () => void }) {
+function ItemRow({ item, onPress, onDelete }: { item: Item; onPress: () => void; onDelete: () => void }) {
   const isExpired = item.expire_date ? new Date(item.expire_date) < new Date() : false;
   const isSoon = !isExpired && item.expire_date
     ? (new Date(item.expire_date).getTime() - Date.now()) < 3 * 24 * 60 * 60 * 1000
     : false;
 
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
-      <View style={styles.rowMain}>
+    <View style={styles.row}>
+      <TouchableOpacity style={styles.rowMain} onPress={onPress}>
         <Text style={styles.rowName}>{item.name}</Text>
         <Text style={styles.rowMeta}>
           {item.category}  ·  {STORAGE_LABELS[item.storage]}  ·  {item.quantity}개
         </Text>
-      </View>
+      </TouchableOpacity>
       {item.expire_date && (
         <Text style={[styles.expireText, isExpired && styles.expired, isSoon && styles.soon]}>
           {isExpired ? '만료' : isSoon ? '임박' : item.expire_date}
         </Text>
       )}
-    </TouchableOpacity>
+      <TouchableOpacity style={styles.deleteButton} onPress={onDelete} hitSlop={8}>
+        <Text style={styles.deleteText}>삭제</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -131,7 +161,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111',
   },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   addButton: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -141,15 +170,6 @@ const styles = StyleSheet.create({
     borderColor: '#bfdbfe',
   },
   addButtonText: { color: '#3b82f6', fontWeight: '600', fontSize: 14 },
-  logoutButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  logoutText: { color: '#ef4444', fontWeight: '600', fontSize: 14 },
   list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   emptyContainer: { flex: 1 },
   row: {
@@ -168,6 +188,16 @@ const styles = StyleSheet.create({
   expireText: { fontSize: 13, color: '#888', marginLeft: 8 },
   expired: { color: '#ef4444', fontWeight: '600' },
   soon: { color: '#f59e0b', fontWeight: '600' },
+  deleteButton: {
+    marginLeft: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  deleteText: { color: '#ef4444', fontWeight: '600', fontSize: 13 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: '#333' },

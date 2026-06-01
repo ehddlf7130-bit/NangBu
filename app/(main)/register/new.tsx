@@ -1,8 +1,10 @@
 import ItemForm from '@/components/ItemForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchExpiryDays } from '@/lib/expiry';
 import { createItem } from '@/lib/items';
-import type { ItemFormValues } from '@/types/item';
+import type { ItemFormValues, StorageType } from '@/types/item';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function RegisterNewScreen() {
@@ -15,6 +17,13 @@ export default function RegisterNewScreen() {
     router.replace('/(main)' as never);
   }
 
+  // 등록 시 (카테고리+보관방식)별 기본 소비기한을 조회 (없으면 null).
+  const resolveExpiry = useCallback(
+    (cat: string, storage: StorageType) =>
+      user ? fetchExpiryDays(user.id, cat, storage) : Promise.resolve(null),
+    [user],
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>식품 등록</Text>
@@ -22,6 +31,7 @@ export default function RegisterNewScreen() {
         mode="create"
         initialValues={{ category: category ?? '' }}
         onSubmit={handleSubmit}
+        resolveExpiry={resolveExpiry}
       />
     </View>
   );

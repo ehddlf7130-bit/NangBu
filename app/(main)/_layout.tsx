@@ -58,6 +58,8 @@ export default function MainLayout() {
       <Tabs.Screen name="mypage/profile" options={{ href: null }} />
       <Tabs.Screen name="mypage/notification-settings" options={{ href: null }} />
       <Tabs.Screen name="mypage/notice" options={{ href: null }} />
+      <Tabs.Screen name="mypage/expiry/category" options={{ href: null }} />
+      <Tabs.Screen name="mypage/expiry/[category]" options={{ href: null }} />
     </Tabs>
   );
 }
