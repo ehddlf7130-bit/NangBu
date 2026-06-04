@@ -18,10 +18,10 @@
 
 | 상태 | 항목 |
 |------|------|
-| ✅ | 인증, 식품 등록·나의 냉장고, 친구, 코멘트·알림, 마이페이지, 레시피(수동), 소비기한 개인화(category_expiry) |
+| ✅ | 인증, 식품 등록·나의 냉장고, 친구, 코멘트·알림, 마이페이지, 레시피(수동), 소비기한 개인화(category_expiry), 레시피 AI 추천(Gemini) |
 | ✅ | **식재료 표준 데이터 도입(§13-7) 전체 완료** — 앱 코드·ingredient_master 테이블·504행·items.ingredient_id 추적 |
 | ✅ | **친구 수락 알림** — notifications.actor_id·type 확장 + handle_friendship_accepted 트리거 |
-| ⬜ | 레시피 AI 추천(§13-5) |
+| ✅ | **레시피 AI 추천(§13-5)** — Edge Function(recommend-recipe) + Gemini 2.5 Flash |
 | ⬜ | 회원 탈퇴(Edge Function/RPC 필요) |
 | ⬜ | UX/UI 디자인 적용 |
 | 보류 | 푸시 알림(Expo Notifications), 사용자 정의 카테고리 |
@@ -132,7 +132,30 @@ supabase_schema.sql
 
 ---
 
-## 8. 주요 트러블슈팅 요약
+## 8. §13-5 레시피 AI 추천 — 구현 완료
+
+**아키텍처**: 클라이언트 → Supabase Edge Function(`recommend-recipe`) → Google Gemini API. API 키는 클라이언트에 노출하지 않고 Edge Function의 secret으로만 보관.
+
+**AI 모델**: Google Gemini 2.5 Flash (무료 티어)
+- endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
+- `generationConfig.responseMimeType="application/json"`으로 JSON 출력 강제
+- 무료 티어 한도: 하루 250회. 무료 티어는 입력/출력이 모델 학습에 사용될 수 있음
+
+**Edge Function** (`supabase/functions/recommend-recipe/index.ts`)
+- JWT 수동 검증(config.toml `verify_jwt=false` + 함수 내부 `supabase.auth.getUser()`). CORS preflight(OPTIONS)는 토큰이 없어서 이 패턴이 필요함
+- 입력: `{ items: [{ name, category, expire_date }] }`
+- 서버에서 오늘 날짜를 계산해 프롬프트에 전달, 유통기한 임박 재료 우선 활용 지시
+- 출력: `{ title, body, used_ingredients[] }`
+- 타임아웃 15초(AbortController). 실패/파싱오류 시 500 + 메시지. API 키는 로그에 남기지 않음
+
+**클라이언트**
+- `lib/recipes.ts`: `requestAiRecipe(items)` — `supabase.functions.invoke('recommend-recipe')`로 호출(JWT 자동 첨부). `createRecipe(userId, values, source='manual')`로 확장, `source='ai'` 지원
+- `types/recipe.ts`: `AiRecipeResult { title, body, used_ingredients[] }`
+- `app/(main)/recipes/new.tsx`: 모드 분기(직접 작성 / AI 추천). AI 추천 흐름: 냉장고 재료 fetch(임박 순 정렬, 기본 선택) → 추천받기 → 미리보기 → 저장(source='ai') / 다시 추천
+
+---
+
+## 9. 주요 트러블슈팅 요약
 
 | 이슈 | 해결 |
 |------|------|
@@ -144,10 +167,15 @@ supabase_schema.sql
 | 알림은 앱이 아닌 트리거 생성 | `handle_new_comment`(SECURITY DEFINER) 트리거가 notifications insert |
 | 웹 SecureStore 에러 | `Platform.OS === 'web'`이면 storage=undefined(supabase-js 기본 localStorage 사용) |
 | 웹 Alert.alert no-op | 웹=`window.confirm/alert`, 네이티브=`Alert` 분기 |
+| Edge Function이 secret을 못 읽음(GEMINI_API_KEY undefined) | secret 이름이 코드의 `Deno.env.get()` 문자열과 글자까지 정확히 일치해야 함. 환경변수는 대문자_언더스코어 규칙(공백/소문자 금지). 예: `"Gemini API Key"`(X) → `"GEMINI_API_KEY"`(O) |
+| secret 추가/수정 후 함수가 옛 값을 씀 | secret 변경 후 `functions deploy`로 재배포 필요 |
+| supabase CLI가 TransportError로 secret set/login 실패 | 네트워크(방화벽/프록시) 문제. secret은 대시보드 Edge Functions > Secrets에서 직접 등록 가능. 배포가 막히면 VPN 끄기 / 핫스팟 전환 |
+| Gemini API 호출 타임아웃 | 레시피 생성은 응답이 길어 10초가 빠듯. 15초 권장 |
+| 앱에서 "Edge Function returned a non-2xx status code"만 뜨고 원인 불명 | 대시보드 Edge Functions > Logs에서 함수의 `console.error` 메시지로 실제 원인 확인 |
 
 ---
 
-## 9. 정리 대상 (§10-5)
+## 10. 정리 대상 (§10-5)
 
 - `components/`의 Expo 스타터 잔존물(external-link, haptic-tab, hello-wave 등) 삭제
 - `constants/theme.ts` 삭제
