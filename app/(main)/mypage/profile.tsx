@@ -1,11 +1,14 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { deleteAccount } from '@/lib/account';
 import { extractErrorMessage } from '@/lib/items';
 import { fetchMyProfile, updateDisplayName, updatePassword } from '@/lib/profiles';
+import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +26,8 @@ export default function ProfileEditScreen() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
+
+  const [deleting, setDeleting] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -75,6 +80,35 @@ export default function ProfileEditScreen() {
     } finally {
       setSavingPassword(false);
     }
+  }
+
+  async function runDeleteAccount() {
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      // 탈퇴로 토큰이 무효화되므로 로컬 세션만 비우고 로그인 화면으로 이동.
+      await supabase.auth.signOut().catch(() => {});
+      router.replace('/(auth)/login');
+    } catch (e: unknown) {
+      const msg = extractErrorMessage(e);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.alert(msg);
+      else Alert.alert('회원 탈퇴 실패', msg);
+      setDeleting(false);
+    }
+  }
+
+  // 탈퇴 확인. 웹에서는 Alert가 동작하지 않아 window.confirm을 사용한다.
+  function confirmDeleteAccount() {
+    if (deleting) return;
+    const message = '회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다. 탈퇴하시겠습니까?';
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(message)) runDeleteAccount();
+      return;
+    }
+    Alert.alert('회원 탈퇴', message, [
+      { text: '취소', style: 'cancel' },
+      { text: '탈퇴', style: 'destructive', onPress: runDeleteAccount },
+    ]);
   }
 
   if (loading) {
@@ -141,10 +175,23 @@ export default function ProfileEditScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* 회원 탈퇴 — 서버 함수 필요로 이번 단계에서는 미구현 */}
+      {/* 회원 탈퇴 */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>회원 탈퇴</Text>
-        <Text style={styles.notice}>회원 탈퇴 기능은 준비 중입니다.</Text>
+        <Text style={styles.notice}>
+          탈퇴 시 등록한 식재료·친구·코멘트·레시피 등 모든 데이터가 삭제되며 복구할 수 없습니다.
+        </Text>
+        <TouchableOpacity
+          style={[styles.deleteButton, deleting && styles.buttonDisabled]}
+          onPress={confirmDeleteAccount}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <ActivityIndicator color="#ef4444" />
+          ) : (
+            <Text style={styles.deleteButtonText}>회원 탈퇴</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -178,4 +225,13 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   notice: { fontSize: 14, color: '#888' },
+  deleteButton: {
+    backgroundColor: '#fef2f2',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  deleteButtonText: { color: '#ef4444', fontSize: 15, fontWeight: '700' },
 });

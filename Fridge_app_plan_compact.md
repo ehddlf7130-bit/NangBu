@@ -1,7 +1,7 @@
 # NangBu 냉장고 앱 — 개발 지침서 (압축판)
 
 > Claude Code용. 이 파일을 기준으로 개발 지시.
-> **기준일: 2026-06-05 (알림 종 아이콘 이동 완료)**
+> **기준일: 2026-06-05 (회원 탈퇴 완료)**
 
 ---
 
@@ -23,7 +23,7 @@
 | ✅ | **친구 수락 알림** — notifications.actor_id·type 확장 + handle_friendship_accepted 트리거 |
 | ✅ | **레시피 AI 추천(§13-5)** — Edge Function(recommend-recipe) + Gemini 2.5 Flash |
 | ✅ | **알림 진입점 종 아이콘화(§14)** — 하단 탭에서 알림 제거(4탭), 각 화면 헤더 우측 `NotificationBell`(안 읽음 빨간 점) |
-| ⬜ | 회원 탈퇴(Edge Function/RPC 필요) |
+| ✅ | **회원 탈퇴(§15)** — DB RPC `delete_own_account()`(SECURITY DEFINER) + FK CASCADE. 프로필 수정 화면에 배치 |
 | ⬜ | UX/UI 디자인 적용 |
 | 보류 | 푸시 알림(Expo Notifications), 사용자 정의 카테고리 |
 
@@ -88,7 +88,7 @@ app/
                        expiry/ (category.tsx / [category].tsx)
 
 components/  ItemForm.tsx(create|edit|readonly) · ItemDetail.tsx · CommentList.tsx · NotificationBell.tsx
-lib/         supabase · items · profiles · friends · comments · notifications · recipes · expiry · format · ingredients
+lib/         supabase · items · profiles · friends · comments · notifications · recipes · expiry · format · ingredients · account
 types/       item · friend · comment · notification · recipe · expiry · ingredient
 constants/   categories.ts (단일 출처, 21개)
 supabase_schema.sql
@@ -168,6 +168,18 @@ supabase_schema.sql
 
 ---
 
+## 8-2. §15 회원 탈퇴 — DB RPC 방식 (구현 완료)
+
+**최종 아키텍처**: 클라이언트 → Supabase **RPC `delete_own_account()`**. (Edge Function 방식으로 먼저 구현했으나 service_role 키 주입/권한 문제로 RPC로 전환. delete-account 함수·config 항목은 제거됨.)
+
+- **DB 함수**: `public.delete_own_account()` — `SECURITY DEFINER`. 내부에서 `auth.uid()`로 호출자 본인 식별 → `profiles` 행 1개 삭제. 나머지는 FK가 처리.
+- **CASCADE 전제**: `profiles.id`를 기준으로 items/comments/friendships/recipes/category_expiry/notifications가 전부 `ON DELETE CASCADE`. `profiles.id → auth.users`도 CASCADE → profiles 한 행 삭제로 public 데이터 + 인증 계정까지 정리(개별 삭제 코드 불필요).
+- **권한**: `authenticated` 역할에 `EXECUTE` GRANT 필요. SECURITY DEFINER라 RLS를 우회해 삭제 수행.
+- **클라이언트** `lib/account.ts`: `deleteAccount()` — `supabase.rpc('delete_own_account')` 호출(JWT 자동 첨부), `error`면 throw. void 반환이라 데이터 체크 없음.
+- **UI** `app/(main)/mypage/profile.tsx`(프로필 수정 화면 하단에 배치): 파괴적 동작 스타일 버튼 → 확인 다이얼로그(§9 분기: 웹 `window.confirm` / 네이티브 `Alert.alert` 취소·탈퇴 destructive) → 진행 중 버튼 비활성+로딩 → 성공 시 `await supabase.auth.signOut().catch(() => {})`로 로컬 세션만 비우고 `router.replace('/(auth)/login')`. 실패 시 웹/네이티브 분기 에러 표시(내부 상세 비노출).
+
+---
+
 ## 9. 주요 트러블슈팅 요약
 
 | 이슈 | 해결 |
@@ -185,6 +197,7 @@ supabase_schema.sql
 | supabase CLI가 TransportError로 secret set/login 실패 | 네트워크(방화벽/프록시) 문제. secret은 대시보드 Edge Functions > Secrets에서 직접 등록 가능. 배포가 막히면 VPN 끄기 / 핫스팟 전환 |
 | Gemini API 호출 타임아웃 | 레시피 생성은 응답이 길어 10초가 빠듯. 15초 권장 |
 | 앱에서 "Edge Function returned a non-2xx status code"만 뜨고 원인 불명 | 대시보드 Edge Functions > Logs에서 함수의 `console.error` 메시지로 실제 원인 확인 |
+| Edge Function에서 `permission denied for table profiles` | service_role 키가 런타임에 미주입/빈 값이면 익명 권한으로 동작해 RLS에 막힘. service_role이 꼭 필요한 관리 작업(타 유저 행 삭제 등)은 **SECURITY DEFINER DB 함수 + RPC**가 키 주입 의존이 없어 더 단순(§15에서 이 방식 채택) |
 
 ---
 
