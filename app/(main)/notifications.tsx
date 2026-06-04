@@ -35,14 +35,17 @@ export default function NotificationsScreen() {
   useFocusEffect(load);
 
   async function handlePress(n: AppNotification) {
-    // 읽음 처리 후 해당 품목 상세로 이동. 읽음 실패해도 이동은 막지 않는다.
     if (!n.is_read) {
       setNotifications((prev) =>
         prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)),
       );
       markNotificationRead(n.id).catch(() => {});
     }
-    router.push(`/(main)/fridge/${n.item_id}` as never);
+    if (n.type === 'friend_accepted' && n.actor_id) {
+      router.push(`/(main)/friends/${n.actor_id}` as never);
+    } else if (n.item_id) {
+      router.push(`/(main)/item/${n.item_id}` as never);
+    }
   }
 
   if (loading) {
@@ -84,10 +87,26 @@ function NotificationRow({
   notification: AppNotification;
   onPress: () => void;
 }) {
+  const unread = !notification.is_read;
+
+  if (notification.type === 'friend_accepted') {
+    const actorName = notification.actor?.display_name ?? '친구';
+    return (
+      <TouchableOpacity style={[styles.row, unread && styles.rowUnread]} onPress={onPress}>
+        {unread && <View style={styles.unreadDot} />}
+        <View style={styles.rowMain}>
+          <Text style={[styles.rowText, unread && styles.rowTextUnread]}>
+            <Text style={styles.bold}>{actorName}</Text>님이 친구 요청을 수락했어요
+          </Text>
+          <Text style={styles.time}>{formatDateTime(notification.created_at)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
   const author = notification.comment?.author?.display_name ?? '친구';
   const itemName = notification.item?.name ?? '품목';
   const content = notification.comment?.content;
-  const unread = !notification.is_read;
 
   return (
     <TouchableOpacity style={[styles.row, unread && styles.rowUnread]} onPress={onPress}>
@@ -97,7 +116,7 @@ function NotificationRow({
           {author}님이 <Text style={styles.bold}>{itemName}</Text>에 코멘트를 남겼어요
         </Text>
         {content ? (
-          <Text style={styles.preview} numberOfLines={1}>“{content}”</Text>
+          <Text style={styles.preview} numberOfLines={1}>”{content}”</Text>
         ) : null}
         <Text style={styles.time}>{formatDateTime(notification.created_at)}</Text>
       </View>
@@ -110,7 +129,7 @@ function EmptyState() {
     <View style={styles.empty}>
       <Text style={styles.emptyIcon}>🔔</Text>
       <Text style={styles.emptyTitle}>알림이 없어요</Text>
-      <Text style={styles.emptyDesc}>친구가 내 품목에 코멘트를 남기면 여기에 표시돼요.</Text>
+      <Text style={styles.emptyDesc}>친구가 코멘트를 남기거나 친구 요청을 수락하면 여기에 표시돼요.</Text>
     </View>
   );
 }

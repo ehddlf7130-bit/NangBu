@@ -59,13 +59,16 @@ CREATE TABLE IF NOT EXISTS public.comments (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- notifications: 인앱 알림 (코멘트 수신 시 트리거가 자동 생성)
+-- notifications: 인앱 알림 (트리거가 자동 생성)
+-- type='comment'  : 친구가 내 품목에 코멘트 → item_id, comment_id 채워짐
+-- type='friend_accepted': 친구 요청 수락 → actor_id(수락한 사람) 채워짐, item/comment는 null
 CREATE TABLE IF NOT EXISTS public.notifications (
   id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   recipient_id uuid        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  type         text        NOT NULL DEFAULT 'comment' CHECK (type IN ('comment')),
-  item_id      uuid        NOT NULL REFERENCES public.items(id) ON DELETE CASCADE,
-  comment_id   uuid        NOT NULL REFERENCES public.comments(id) ON DELETE CASCADE,
+  type         text        NOT NULL DEFAULT 'comment' CHECK (type IN ('comment', 'friend_accepted')),
+  item_id      uuid        REFERENCES public.items(id) ON DELETE CASCADE,
+  comment_id   uuid        REFERENCES public.comments(id) ON DELETE CASCADE,
+  actor_id     uuid        REFERENCES public.profiles(id) ON DELETE SET NULL,
   is_read      boolean     NOT NULL DEFAULT false,
   created_at   timestamptz NOT NULL DEFAULT now()
 );
@@ -163,7 +166,33 @@ CREATE TRIGGER on_comment_created
 
 
 -- ================================================================
--- 5. RLS 활성화
+-- 5. 트리거: 친구 요청 수락 → requester에게 알림 생성
+-- ================================================================
+
+CREATE OR REPLACE FUNCTION public.handle_friendship_accepted()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- pending → accepted 로 바뀔 때만 발동 (수락 이벤트)
+  IF NEW.status = 'accepted' AND OLD.status = 'pending' THEN
+    INSERT INTO public.notifications (recipient_id, type, actor_id)
+    VALUES (NEW.requester_id, 'friend_accepted', NEW.addressee_id);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_friendship_accepted ON public.friendships;
+CREATE TRIGGER on_friendship_accepted
+  AFTER UPDATE ON public.friendships
+  FOR EACH ROW EXECUTE FUNCTION public.handle_friendship_accepted();
+
+
+-- ================================================================
+-- 6. RLS 활성화
 -- ================================================================
 
 ALTER TABLE public.profiles      ENABLE ROW LEVEL SECURITY;
@@ -174,7 +203,7 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 
 -- ================================================================
--- 6. RLS 정책
+-- 7. RLS 정책
 -- ================================================================
 
 -- ----------------------------------------------------------------

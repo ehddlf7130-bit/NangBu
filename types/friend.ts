@@ -15,5 +15,11 @@ export interface Profile {
 export interface Friend {
   friendshipId: string;
   status: FriendshipStatus;
-  profile: Profile; // 나의 상대방(친구) 프로필
+  profile: Profile;
+}
+
+// 받은 친구 요청 (pending 상태, addressee가 나인 경우)
+export interface PendingRequest {
+  friendshipId: string;
+  profile: Profile; // 요청을 보낸 사람 (requester)
 }

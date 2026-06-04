@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Friend, FriendshipStatus, Profile } from '@/types/friend';
+import type { Friend, FriendshipStatus, PendingRequest, Profile } from '@/types/friend';
 import type { Item } from '@/types/item';
 
 const PROFILE_COLUMNS = 'id, username, display_name, fridge_public, created_at';
@@ -50,12 +50,8 @@ export async function fetchFriends(userId: string): Promise<Friend[]> {
 }
 
 /**
- * username으로 친구 요청을 생성한다.
- * - 존재하지 않는 username → 오류
- * - 자기 자신 추가 → 오류
- * - 이미 존재하는 관계(양방향) → 오류
- * MVP에서는 바로 'accepted'로 넣는다(수락 절차는 2차, Fridge_app_plan.md §4 참고).
- * 추가한 상대방 프로필을 반환한다.
+ * username으로 친구 요청을 보낸다 (pending 상태로 INSERT).
+ * 상대방이 수락해야 accepted로 바뀐다.
  */
 export async function addFriend(userId: string, username: string): Promise<Profile> {
   const { data: target, error: lookupError } = await supabase
@@ -67,28 +63,78 @@ export async function addFriend(userId: string, username: string): Promise<Profi
   if (!target) throw new Error('해당 아이디의 사용자를 찾을 수 없습니다.');
   if (target.id === userId) throw new Error('자기 자신은 친구로 추가할 수 없습니다.');
 
-  // 양방향 중복 검사 (RLS상 내가 당사자인 행만 보이므로 둘 다 확인 가능)
   const { data: existing, error: existingError } = await supabase
     .from('friendships')
-    .select('id')
+    .select('id, status')
     .or(
       `and(requester_id.eq.${userId},addressee_id.eq.${target.id}),` +
         `and(requester_id.eq.${target.id},addressee_id.eq.${userId})`,
     )
     .maybeSingle();
   if (existingError) throw existingError;
-  if (existing) throw new Error('이미 친구이거나 요청을 보낸 상대입니다.');
+  if (existing) {
+    throw new Error(
+      (existing as { status: string }).status === 'pending'
+        ? '이미 요청을 보냈거나 받은 상대입니다.'
+        : '이미 친구입니다.',
+    );
+  }
 
   const { error: insertError } = await supabase
     .from('friendships')
-    .insert({
-      requester_id: userId,
-      addressee_id: target.id,
-      status: 'accepted',
-    });
+    .insert({ requester_id: userId, addressee_id: target.id, status: 'pending' });
   if (insertError) throw insertError;
 
   return target as Profile;
+}
+
+/** 내가 받은 대기 중(pending) 친구 요청 목록 조회 */
+export async function fetchPendingRequests(userId: string): Promise<PendingRequest[]> {
+  const { data: rows, error } = await supabase
+    .from('friendships')
+    .select('id, requester_id')
+    .eq('addressee_id', userId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  if (!rows || rows.length === 0) return [];
+
+  const requesterIds = rows.map((r) => r.requester_id);
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select(PROFILE_COLUMNS)
+    .in('id', requesterIds);
+  if (profileError) throw profileError;
+
+  const profileById = new Map<string, Profile>(
+    (profiles ?? []).map((p) => [p.id, p as Profile]),
+  );
+
+  return rows
+    .map((r): PendingRequest | null => {
+      const profile = profileById.get(r.requester_id);
+      if (!profile) return null;
+      return { friendshipId: r.id, profile };
+    })
+    .filter((r): r is PendingRequest => r !== null);
+}
+
+/** 친구 요청을 수락한다 (status: pending → accepted). */
+export async function acceptFriend(friendshipId: string): Promise<void> {
+  const { error } = await supabase
+    .from('friendships')
+    .update({ status: 'accepted' })
+    .eq('id', friendshipId);
+  if (error) throw error;
+}
+
+/** 친구 관계를 삭제한다 (양방향 당사자 모두 가능, RLS 보장). */
+export async function removeFriend(friendshipId: string): Promise<void> {
+  const { error } = await supabase
+    .from('friendships')
+    .delete()
+    .eq('id', friendshipId);
+  if (error) throw error;
 }
 
 /** 친구의 프로필(이름 + 공개 여부) 조회 */

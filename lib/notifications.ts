@@ -5,9 +5,10 @@ import type { AppNotification } from '@/types/notification';
 // notifications → items(item_id), notifications → comments(comment_id),
 // comments → profiles(author_id) 모두 단일 FK라 임베드가 모호하지 않다.
 const NOTIFICATION_SELECT =
-  'id, type, item_id, comment_id, is_read, created_at, ' +
+  'id, type, item_id, comment_id, actor_id, is_read, created_at, ' +
   'item:items(id, name), ' +
-  'comment:comments(id, content, author:profiles(id, display_name, username))';
+  'comment:comments(id, content, author:profiles(id, display_name, username)), ' +
+  'actor:profiles!actor_id(id, display_name, username)';
 
 /** 내가 받은 알림을 최신순으로 조회한다. (RLS: recipient만 조회 가능) */
 export async function fetchNotifications(userId: string): Promise<AppNotification[]> {

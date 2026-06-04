@@ -1,7 +1,7 @@
 # NangBu 냉장고 앱 — 개발 지침서 (압축판)
 
 > Claude Code용. 이 파일을 기준으로 개발 지시.
-> **기준일: 2026-06-04 (§13-7 전체 완료)**
+> **기준일: 2026-06-04 (친구 수락 알림 완료)**
 
 ---
 
@@ -20,9 +20,9 @@
 |------|------|
 | ✅ | 인증, 식품 등록·나의 냉장고, 친구, 코멘트·알림, 마이페이지, 레시피(수동), 소비기한 개인화(category_expiry) |
 | ✅ | **식재료 표준 데이터 도입(§13-7) 전체 완료** — 앱 코드·ingredient_master 테이블·504행·items.ingredient_id 추적 |
+| ✅ | **친구 수락 알림** — notifications.actor_id·type 확장 + handle_friendship_accepted 트리거 |
 | ⬜ | 레시피 AI 추천(§13-5) |
 | ⬜ | 회원 탈퇴(Edge Function/RPC 필요) |
-| ⬜ | 친구 수락 알림(notifications 스키마 수정 필요) |
 | ⬜ | UX/UI 디자인 적용 |
 | 보류 | 푸시 알림(Expo Notifications), 사용자 정의 카테고리 |
 
@@ -40,7 +40,7 @@
 
 **comments**: `id` · `item_id(FK)` · `author_id(FK)` · `content`
 
-**notifications**: `id` · `recipient_id` · `type(comment)` · `item_id` · `comment_id` · `is_read(bool)`
+**notifications**: `id` · `recipient_id` · `type(comment|friend_accepted)` · `item_id(nullable)` · `comment_id(nullable)` · `actor_id(nullable FK→profiles)` · `is_read(bool)`
 
 **recipes**: `id` · `owner_id` · `title` · `body` · `source(manual|ai)`
 
