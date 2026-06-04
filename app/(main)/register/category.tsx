@@ -4,8 +4,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function CategoryScreen() {
   function handleSelect(category: string) {
-    // typedRoutes가 새 경로를 인식하기 전까지 cast 필요
-    router.push({ pathname: '/(main)/register/new' as never, params: { category } });
+    // 카테고리 → 표준 재료 선택 화면으로 이동(§13-7). typedRoutes가 새 경로를 인식하기 전까지 cast 필요.
+    router.push({ pathname: '/(main)/register/ingredient' as never, params: { category } });
   }
 
   return (

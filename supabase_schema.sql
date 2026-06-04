@@ -34,8 +34,9 @@ CREATE TABLE IF NOT EXISTS public.items (
   storage     text        NOT NULL CHECK (storage IN ('fridge', 'freezer', 'room')),
   storage_tip text,
   expire_date date,
-  quantity    int         NOT NULL DEFAULT 1 CHECK (quantity >= 0),
-  created_at  timestamptz NOT NULL DEFAULT now()
+  quantity      int         NOT NULL DEFAULT 1 CHECK (quantity >= 0),
+  ingredient_id uuid        REFERENCES public.ingredient_master(id),
+  created_at    timestamptz NOT NULL DEFAULT now()
 );
 
 -- friendships: 친구 관계. (requester, addressee) 쌍은 유일.
@@ -466,3 +467,38 @@ CREATE POLICY "category_expiry: delete own"
   USING (owner_id = auth.uid());
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.category_expiry TO authenticated;
+
+
+-- ================================================================
+-- 10. ingredient_master (§13-7) — 식재료 표준 보관 정보 (읽기 전용 마스터)
+--     약 504개 식재료의 표준 보관 일수·보관 팁. 앱에서 수정 불가.
+--     데이터 적재는 SQL Editor/service_role로 실행(RLS 우회).
+--     쓰기 정책·GRANT는 의도적으로 두지 않는다.
+--     room/fridge/freezer_days = 0 → 해당 보관방식 비권장(0일 ≠ "오늘까지").
+--     테이블 + 인덱스 + RLS + 정책 + GRANT 한 세트. 재실행 안전.
+-- ================================================================
+
+CREATE TABLE IF NOT EXISTS public.ingredient_master (
+  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         text        NOT NULL,
+  category     text        NOT NULL,
+  room_days    int         NOT NULL DEFAULT 0 CHECK (room_days    >= 0),
+  fridge_days  int         NOT NULL DEFAULT 0 CHECK (fridge_days  >= 0),
+  freezer_days int         NOT NULL DEFAULT 0 CHECK (freezer_days >= 0),
+  storage_tip  text,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ingredient_master_category ON public.ingredient_master (category);
+
+ALTER TABLE public.ingredient_master ENABLE ROW LEVEL SECURITY;
+
+-- 인증 사용자는 모두 조회 가능
+DROP POLICY IF EXISTS "ingredient_master: read all" ON public.ingredient_master;
+CREATE POLICY "ingredient_master: read all"
+  ON public.ingredient_master FOR SELECT TO authenticated
+  USING (true);
+
+-- 조회 권한만 부여. INSERT/UPDATE/DELETE 미부여 → 앱에서 마스터 변경 불가.
+GRANT SELECT ON public.ingredient_master TO authenticated;

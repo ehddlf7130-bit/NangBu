@@ -50,6 +50,7 @@ export default function MainLayout() {
       {/* 탭에는 노출하지 않지만 router.push로 이동하는 화면들 */}
       <Tabs.Screen name="item/[itemId]" options={{ href: null }} />
       <Tabs.Screen name="register/category" options={{ href: null }} />
+      <Tabs.Screen name="register/ingredient" options={{ href: null }} />
       <Tabs.Screen name="register/new" options={{ href: null }} />
       <Tabs.Screen name="fridge/[itemId]" options={{ href: null }} />
       <Tabs.Screen name="friends/[friendId]" options={{ href: null }} />

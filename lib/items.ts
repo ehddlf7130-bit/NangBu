@@ -46,6 +46,7 @@ export async function fetchItem(itemId: string): Promise<Item> {
 export async function createItem(
   userId: string,
   values: ItemFormValues,
+  ingredientId?: string | null,
 ): Promise<Item> {
   const { data, error } = await supabase
     .from('items')
@@ -57,6 +58,7 @@ export async function createItem(
       storage_tip: values.storage_tip || null,
       expire_date: values.expire_date || null,
       quantity: values.quantity,
+      ingredient_id: ingredientId ?? null,
     })
     .select()
     .single();

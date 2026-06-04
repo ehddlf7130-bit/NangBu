@@ -23,6 +23,8 @@ interface ItemFormProps {
   scrollable?: boolean;
   // (등록 전용) 카테고리+보관방식으로 기본 소비기한(일수)을 조회. 유통기한이 비어있을 때만 자동 채움.
   resolveExpiry?: (category: string, storage: StorageType) => Promise<number | null>;
+  // (표준 재료 선택 시) 보관방식별 마스터 권장 일수. 0 = 비권장 → 해당 칩 비활성. null/미지정이면 모든 보관방식 활성(직접 입력 흐름).
+  ingredientDays?: Record<StorageType, number> | null;
 }
 
 const STORAGE_OPTIONS: StorageType[] = ['fridge', 'freezer', 'room'];
@@ -42,6 +44,7 @@ export default function ItemForm({
   onSubmit,
   scrollable = true,
   resolveExpiry,
+  ingredientDays,
 }: ItemFormProps) {
   const [values, setValues] = useState<ItemFormValues>({
     ...DEFAULT_VALUES,
@@ -142,27 +145,33 @@ export default function ItemForm({
 
       <Field label="보관 방식 *">
         <View style={styles.chipRow}>
-          {STORAGE_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[
-                styles.chip,
-                values.storage === opt && styles.chipSelected,
-                isReadonly && styles.chipDisabled,
-              ]}
-              onPress={() => !isReadonly && set('storage', opt)}
-              disabled={isReadonly}
-            >
-              <Text
+          {STORAGE_OPTIONS.map((opt) => {
+            // 표준 재료 선택 시 일수가 0인 보관방식은 '비권장' → 비활성. 직접 입력이면 모두 활성.
+            const discouraged = !!ingredientDays && ingredientDays[opt] <= 0;
+            const disabled = isReadonly || discouraged;
+            return (
+              <TouchableOpacity
+                key={opt}
                 style={[
-                  styles.chipText,
-                  values.storage === opt && styles.chipTextSelected,
+                  styles.chip,
+                  values.storage === opt && styles.chipSelected,
+                  disabled && styles.chipDisabled,
                 ]}
+                onPress={() => !disabled && set('storage', opt)}
+                disabled={disabled}
               >
-                {STORAGE_LABELS[opt]}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.chipText,
+                    values.storage === opt && styles.chipTextSelected,
+                  ]}
+                >
+                  {STORAGE_LABELS[opt]}
+                  {discouraged ? ' (비권장)' : ''}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </Field>
 

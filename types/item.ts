@@ -15,6 +15,7 @@ export interface Item {
   storage_tip: string | null;
   expire_date: string | null; // YYYY-MM-DD
   quantity: number;
+  ingredient_id: string | null; // nullable FK → ingredient_master.id (표준 재료 선택 시 연결, 직접 입력이면 null)
   created_at: string;
 }
 
