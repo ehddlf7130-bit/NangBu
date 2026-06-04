@@ -15,3 +15,10 @@ export interface RecipeFormValues {
   title: string;
   body: string;
 }
+
+// AI 레시피 추천 결과 (recommend-recipe Edge Function 응답)
+export interface AiRecipeResult {
+  title: string;
+  body: string;
+  used_ingredients: string[];
+}
