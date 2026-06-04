@@ -10,7 +10,7 @@ export default function MainLayout() {
         tabBarInactiveTintColor: '#94a3b8',
       }}
     >
-      {/* 하단 탭: 냉장고 / 커뮤니티 / 레시피 / 알림 / 마이페이지 */}
+      {/* 하단 탭: 냉장고 / 커뮤니티 / 레시피 / 마이페이지 */}
       <Tabs.Screen
         name="index"
         options={{
@@ -33,13 +33,6 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
-        options={{
-          title: '알림',
-          tabBarIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="mypage/index"
         options={{
           title: '마이페이지',
@@ -48,6 +41,7 @@ export default function MainLayout() {
       />
 
       {/* 탭에는 노출하지 않지만 router.push로 이동하는 화면들 */}
+      <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="item/[itemId]" options={{ href: null }} />
       <Tabs.Screen name="register/category" options={{ href: null }} />
       <Tabs.Screen name="register/ingredient" options={{ href: null }} />

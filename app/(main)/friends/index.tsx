@@ -1,3 +1,4 @@
+import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { addFriend, acceptFriend, fetchFriends, fetchPendingRequests, removeFriend } from '@/lib/friends';
 import { extractErrorMessage } from '@/lib/items';
@@ -145,7 +146,10 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>친구</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>친구</Text>
+        <NotificationBell />
+      </View>
 
       <View style={styles.addBox}>
         <TextInput
@@ -292,13 +296,18 @@ function EmptyState() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 12,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: '#111',
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 12,
   },
   addBox: {
     flexDirection: 'row',

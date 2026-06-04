@@ -1,3 +1,4 @@
+import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { deleteItem, extractErrorMessage, fetchMyItems } from '@/lib/items';
 import type { Item } from '@/types/item';
@@ -85,12 +86,15 @@ export default function FridgeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>나의 냉장고</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push('/(main)/register/category' as never)}
-        >
-          <Text style={styles.addButtonText}>＋ 추가</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <NotificationBell />
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push('/(main)/register/category' as never)}
+          >
+            <Text style={styles.addButtonText}>＋ 추가</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <FlatList
         data={items}
@@ -161,6 +165,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111',
   },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   addButton: {
     paddingHorizontal: 14,
     paddingVertical: 8,

@@ -1,3 +1,4 @@
+import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractErrorMessage } from '@/lib/items';
 import { fetchMyProfile, updateFridgePublic } from '@/lib/profiles';
@@ -77,7 +78,10 @@ export default function MyPageScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>마이페이지</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>마이페이지</Text>
+        <NotificationBell />
+      </View>
 
       {/* 프로필 요약 */}
       <View style={styles.profileCard}>
@@ -125,6 +129,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 20, paddingTop: 28, gap: 20 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 24, fontWeight: '700', color: '#111' },
   profileCard: {
     backgroundColor: '#f8fafc',

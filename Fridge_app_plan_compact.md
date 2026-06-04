@@ -1,7 +1,7 @@
 # NangBu 냉장고 앱 — 개발 지침서 (압축판)
 
 > Claude Code용. 이 파일을 기준으로 개발 지시.
-> **기준일: 2026-06-04 (친구 수락 알림 완료)**
+> **기준일: 2026-06-05 (알림 종 아이콘 이동 완료)**
 
 ---
 
@@ -22,6 +22,7 @@
 | ✅ | **식재료 표준 데이터 도입(§13-7) 전체 완료** — 앱 코드·ingredient_master 테이블·504행·items.ingredient_id 추적 |
 | ✅ | **친구 수락 알림** — notifications.actor_id·type 확장 + handle_friendship_accepted 트리거 |
 | ✅ | **레시피 AI 추천(§13-5)** — Edge Function(recommend-recipe) + Gemini 2.5 Flash |
+| ✅ | **알림 진입점 종 아이콘화(§14)** — 하단 탭에서 알림 제거(4탭), 각 화면 헤더 우측 `NotificationBell`(안 읽음 빨간 점) |
 | ⬜ | 회원 탈퇴(Edge Function/RPC 필요) |
 | ⬜ | UX/UI 디자인 적용 |
 | 보류 | 푸시 알림(Expo Notifications), 사용자 정의 카테고리 |
@@ -75,18 +76,18 @@ app/
   index.tsx            # 세션 → Redirect
   (auth)/              login.tsx / signup.tsx
   (main)/
-    _layout.tsx        # 하단 탭: 냉장고/커뮤니티/레시피/알림/마이페이지
+    _layout.tsx        # 하단 탭: 냉장고/커뮤니티/레시피/마이페이지 (알림은 탭에서 제외, href:null 유지)
     index.tsx          # 나의 냉장고 목록 (첫 화면)
     register/          category.tsx / ingredient.tsx / new.tsx (등록 3단계 흐름)
     item/[itemId].tsx  # 재료 정보 (읽기 전용) — 내 재료=편집버튼, 친구재료=코멘트작성
     fridge/[itemId].tsx # 편집 전용 + 삭제
     friends/           index.tsx / [friendId].tsx (친구 냉장고 readonly)
     recipes/           index.tsx / new.tsx / [recipeId].tsx
-    notifications.tsx
+    notifications.tsx  # 탭에서 제외(href:null). 각 화면 헤더 종 아이콘으로 진입
     mypage/            index.tsx / profile.tsx / notification-settings.tsx / notice.tsx
                        expiry/ (category.tsx / [category].tsx)
 
-components/  ItemForm.tsx(create|edit|readonly) · ItemDetail.tsx · CommentList.tsx
+components/  ItemForm.tsx(create|edit|readonly) · ItemDetail.tsx · CommentList.tsx · NotificationBell.tsx
 lib/         supabase · items · profiles · friends · comments · notifications · recipes · expiry · format · ingredients
 types/       item · friend · comment · notification · recipe · expiry · ingredient
 constants/   categories.ts (단일 출처, 21개)
@@ -155,6 +156,18 @@ supabase_schema.sql
 
 ---
 
+## 8-1. §14 알림 진입점 — 종 아이콘 + 빨간 점 (구현 완료)
+
+하단 탭의 "알림"을 제거하고 각 메인 화면 헤더 우측의 종 아이콘으로 진입하도록 변경.
+
+- **탭 제거**: `app/(main)/_layout.tsx`에서 notifications를 탭 목록 밖 `href:null` 그룹으로 이동(4탭). 화면 파일·라우팅은 그대로 유지 → `router.push('/(main)/notifications')`로 접근.
+- **재사용 컴포넌트**: `components/NotificationBell.tsx` — `Ionicons notifications-outline` + 절대 위치 빨간 점. 누르면 알림 화면 이동. 색·크기는 파일 상단 상수(`BELL_COLOR`=기본 텍스트, `BADGE_COLOR`=danger, `BELL_SIZE`/`BADGE_SIZE`)로 모아 둠 → 디자인 토큰 정해지면 이곳만 교체(`// TODO: theme.*`).
+- **안 읽음 조회**: `lib/notifications.ts`에 `hasUnreadNotifications(userId)` 추가 — `recipient_id=본인 & is_read=false` count 쿼리(`head:true`, 개수 미반환). 컴포넌트는 supabase 직접 쿼리 없이 lib 경유.
+- **갱신**: 컴포넌트의 `useFocusEffect`로 화면 포커스마다 재조회. 알림 화면에서 개별 항목 탭 시 `markNotificationRead` → 돌아오면 점 사라짐. 개수 없이 있음/없음만 표시.
+- **헤더 배치**: 냉장고·레시피는 기존 `＋ 추가` 옆 `headerActions` row에 추가, 헤더가 없던 커뮤니티·마이페이지는 제목+종을 `header` row(`space-between`)로 감쌈. 웹/iOS/안드로이드 공통 동작 확인.
+
+---
+
 ## 9. 주요 트러블슈팅 요약
 
 | 이슈 | 해결 |
@@ -178,6 +191,6 @@ supabase_schema.sql
 ## 10. 정리 대상 (§10-5)
 
 - `components/`의 Expo 스타터 잔존물(external-link, haptic-tab, hello-wave 등) 삭제
-- `constants/theme.ts` 삭제
+- `constants/theme.ts` 삭제 — 단, 디자인 토큰 도입 시 `NotificationBell` 등의 임시 상수(BELL_COLOR/BADGE_COLOR…)를 토큰으로 교체하는 작업과 함께 정리
 - `console.log` 제거 (AuthContext, index, _layout 등)
 - 알림 클릭 이동 경로: `fridge/[id]` → `item/[id]` 변경 검토

@@ -1,3 +1,4 @@
+import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDateTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
@@ -54,12 +55,15 @@ export default function RecipesScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>레시피</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push('/(main)/recipes/new' as never)}
-        >
-          <Text style={styles.addButtonText}>＋ 추가</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <NotificationBell />
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push('/(main)/recipes/new' as never)}
+          >
+            <Text style={styles.addButtonText}>＋ 추가</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <FlatList
         data={recipes}
@@ -105,6 +109,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   title: { fontSize: 24, fontWeight: '700', color: '#111' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   addButton: {
     paddingHorizontal: 14,
     paddingVertical: 8,

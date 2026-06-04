@@ -21,6 +21,17 @@ export async function fetchNotifications(userId: string): Promise<AppNotificatio
   return (data ?? []) as unknown as AppNotification[];
 }
 
+/** 내가 받은 알림 중 안 읽은(is_read=false) 것이 1개 이상 있는지 확인한다. (종 뱃지용) */
+export async function hasUnreadNotifications(userId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('recipient_id', userId)
+    .eq('is_read', false);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 /** 알림을 읽음 처리한다. (RLS: recipient만 update 가능) */
 export async function markNotificationRead(notificationId: string): Promise<void> {
   const { error } = await supabase
