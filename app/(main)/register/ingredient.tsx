@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { fetchIngredientsByCategory } from '@/lib/ingredients';
 import { extractErrorMessage } from '@/lib/items';
 import type { IngredientMaster } from '@/types/ingredient';
@@ -95,26 +96,26 @@ export default function IngredientScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     paddingHorizontal: 20,
     paddingTop: 32,
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#111', marginBottom: 6 },
-  subtitle: { fontSize: 14, color: '#888', marginBottom: 16 },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 16 },
   manualButton: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.primaryTint,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: colors.primaryTintBorder,
     marginBottom: 16,
     alignItems: 'center',
   },
-  manualText: { fontSize: 16, fontWeight: '600', color: '#3b82f6' },
+  manualText: { fontSize: 16, fontWeight: '600', color: colors.primary },
   loading: { marginTop: 24 },
-  error: { color: '#ef4444', fontSize: 14, marginTop: 16 },
-  empty: { color: '#888', fontSize: 14, textAlign: 'center', marginTop: 24 },
+  error: { color: colors.danger, fontSize: 14, marginTop: 16 },
+  empty: { color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 24 },
   list: { gap: 10, paddingBottom: 40 },
   item: {
     flexDirection: 'row',
@@ -122,13 +123,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   itemBody: { flex: 1, gap: 2 },
-  itemName: { fontSize: 17, fontWeight: '500', color: '#111' },
-  itemTip: { fontSize: 13, color: '#999' },
-  arrow: { fontSize: 22, color: '#aaa', marginLeft: 12 },
+  itemName: { fontSize: 17, fontWeight: '500', color: colors.textPrimary },
+  itemTip: { fontSize: 13, color: colors.textSecondary },
+  arrow: { fontSize: 22, color: colors.textSecondary, marginLeft: 12 },
 });

@@ -1,3 +1,4 @@
+import { colors, radius } from '@/constants/theme';
 import CommentList from '@/components/CommentList';
 import ItemForm from '@/components/ItemForm';
 import { fetchComments } from '@/lib/comments';
@@ -70,7 +71,7 @@ export default function ItemDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -109,7 +110,7 @@ export default function ItemDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
@@ -119,19 +120,19 @@ const styles = StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 12,
   },
-  title: { fontSize: 22, fontWeight: '700', color: '#111' },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
   deleteButton: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
+    backgroundColor: colors.dangerTint,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.dangerTintBorder,
   },
-  deleteText: { color: '#ef4444', fontSize: 14, fontWeight: '600' },
+  deleteText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
   body: { flex: 1 },
   bodyContent: { paddingBottom: 32 },
   commentSection: { paddingHorizontal: 20, paddingTop: 4, gap: 12 },
-  commentTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  commentTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

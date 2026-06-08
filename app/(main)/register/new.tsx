@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import ItemForm from '@/components/ItemForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveExpiryDays } from '@/lib/expiry';
@@ -100,12 +101,12 @@ export default function RegisterNewScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { justifyContent: 'center', alignItems: 'center' },
   header: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111',
+    color: colors.textPrimary,
     paddingHorizontal: 20,
     paddingTop: 28,
     paddingBottom: 12,

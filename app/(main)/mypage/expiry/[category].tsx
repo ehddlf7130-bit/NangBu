@@ -1,3 +1,4 @@
+import { colors, radius } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   deleteCategoryExpiry,
@@ -81,7 +82,7 @@ export default function ExpiryCategoryDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -106,7 +107,7 @@ export default function ExpiryCategoryDetailScreen() {
                 value={days[s]}
                 onChangeText={(v) => setDays((prev) => ({ ...prev, [s]: v }))}
                 placeholder="-"
-                placeholderTextColor="#bbb"
+                placeholderTextColor={colors.textDisabled}
                 keyboardType="number-pad"
                 maxLength={4}
               />
@@ -121,19 +122,19 @@ export default function ExpiryCategoryDetailScreen() {
         onPress={handleSave}
         disabled={saving}
       >
-        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>저장</Text>}
+        {saving ? <ActivityIndicator color={colors.background} /> : <Text style={styles.buttonText}>저장</Text>}
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 20 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 20 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   header: { paddingTop: 28, paddingBottom: 20, gap: 4 },
-  backText: { fontSize: 15, color: '#3b82f6', marginBottom: 4 },
-  title: { fontSize: 24, fontWeight: '700', color: '#111' },
-  subtitle: { fontSize: 14, color: '#888' },
+  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  subtitle: { fontSize: 14, color: colors.textSecondary },
   list: { gap: 12 },
   row: {
     flexDirection: 'row',
@@ -141,33 +142,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
-  rowLabel: { fontSize: 16, fontWeight: '600', color: '#111' },
+  rowLabel: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   input: {
     width: 80,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 15,
-    color: '#111',
+    color: colors.textPrimary,
     textAlign: 'right',
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
-  unit: { fontSize: 15, color: '#555' },
+  unit: { fontSize: 15, color: colors.textSecondary },
   button: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 24,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: colors.background, fontSize: 16, fontWeight: '700' },
 });

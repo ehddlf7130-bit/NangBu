@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { STORAGE_LABELS, type Item } from '@/types/item';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -27,6 +28,6 @@ function Row({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 16 },
   row: { gap: 4 },
-  label: { fontSize: 14, fontWeight: '600', color: '#888' },
-  value: { fontSize: 16, color: '#111' },
+  label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  value: { fontSize: 16, color: colors.textPrimary },
 });

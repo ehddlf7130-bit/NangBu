@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { CATEGORIES } from '@/constants/categories';
 import { addDaysToToday } from '@/lib/expiry';
 import { extractErrorMessage } from '@/lib/items';
@@ -113,7 +114,7 @@ export default function ItemForm({
           onChangeText={(v) => set('name', v)}
           editable={!isReadonly}
           placeholder="식재료 이름"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
         />
       </Field>
 
@@ -182,7 +183,7 @@ export default function ItemForm({
           onChangeText={(v) => set('storage_tip', v)}
           editable={!isReadonly}
           placeholder="보관 시 주의사항 (선택)"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
           multiline
           numberOfLines={3}
         />
@@ -195,7 +196,7 @@ export default function ItemForm({
           onChangeText={(v) => set('expire_date', v)}
           editable={!isReadonly}
           placeholder="YYYY-MM-DD (선택)"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
           keyboardType="numbers-and-punctuation"
           maxLength={10}
         />
@@ -224,7 +225,7 @@ export default function ItemForm({
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.background} />
           ) : (
             <Text style={styles.submitText}>{submitLabel}</Text>
           )}
@@ -259,21 +260,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#fff' },
+  scroll: { flex: 1, backgroundColor: colors.background },
   container: { padding: 20, gap: 20, paddingBottom: 40 },
   field: { gap: 6 },
-  label: { fontSize: 14, fontWeight: '600', color: '#333' },
+  label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 15,
-    color: '#111',
-    backgroundColor: '#fff',
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
   },
-  inputDisabled: { backgroundColor: '#f5f5f5', color: '#888' },
+  inputDisabled: { backgroundColor: colors.surface, color: colors.textSecondary },
   inputNarrow: { width: 100 },
   multiline: { height: 80, textAlignVertical: 'top' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -282,21 +283,21 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
-  chipSelected: { borderColor: '#3b82f6', backgroundColor: '#eff6ff' },
+  chipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
   chipDisabled: { opacity: 0.6 },
-  chipText: { fontSize: 14, color: '#555' },
-  chipTextSelected: { color: '#3b82f6', fontWeight: '600' },
-  errorText: { color: '#ef4444', fontSize: 14, marginTop: -8 },
+  chipText: { fontSize: 14, color: colors.textSecondary },
+  chipTextSelected: { color: colors.primary, fontWeight: '600' },
+  errorText: { color: colors.danger, fontSize: 14, marginTop: -8 },
   submitButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 8,
   },
   submitDisabled: { opacity: 0.6 },
-  submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  submitText: { color: colors.background, fontSize: 16, fontWeight: '700' },
 });

@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { deleteAccount } from '@/lib/account';
 import { extractErrorMessage } from '@/lib/items';
@@ -114,7 +115,7 @@ export default function ProfileEditScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -136,14 +137,14 @@ export default function ProfileEditScreen() {
           value={displayName}
           onChangeText={setDisplayName}
           placeholder="회원명"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
         />
         <TouchableOpacity
           style={[styles.button, savingName && styles.buttonDisabled]}
           onPress={handleSaveName}
           disabled={savingName}
         >
-          {savingName ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>회원명 저장</Text>}
+          {savingName ? <ActivityIndicator color={colors.background} /> : <Text style={styles.buttonText}>회원명 저장</Text>}
         </TouchableOpacity>
       </View>
 
@@ -155,7 +156,7 @@ export default function ProfileEditScreen() {
           value={password}
           onChangeText={setPassword}
           placeholder="새 비밀번호 (6자 이상)"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
           secureTextEntry
         />
         <TextInput
@@ -163,7 +164,7 @@ export default function ProfileEditScreen() {
           value={passwordConfirm}
           onChangeText={setPasswordConfirm}
           placeholder="새 비밀번호 확인"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
           secureTextEntry
         />
         <TouchableOpacity
@@ -171,7 +172,7 @@ export default function ProfileEditScreen() {
           onPress={handleChangePassword}
           disabled={savingPassword}
         >
-          {savingPassword ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>비밀번호 변경</Text>}
+          {savingPassword ? <ActivityIndicator color={colors.background} /> : <Text style={styles.buttonText}>비밀번호 변경</Text>}
         </TouchableOpacity>
       </View>
 
@@ -187,7 +188,7 @@ export default function ProfileEditScreen() {
           disabled={deleting}
         >
           {deleting ? (
-            <ActivityIndicator color="#ef4444" />
+            <ActivityIndicator color={colors.danger} />
           ) : (
             <Text style={styles.deleteButtonText}>회원 탈퇴</Text>
           )}
@@ -198,40 +199,40 @@ export default function ProfileEditScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingTop: 28, gap: 28 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   header: { gap: 4 },
-  backText: { fontSize: 15, color: '#3b82f6', marginBottom: 4 },
-  title: { fontSize: 24, fontWeight: '700', color: '#111' },
+  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   section: { gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 15,
-    color: '#111',
-    backgroundColor: '#fff',
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
   },
   button: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  notice: { fontSize: 14, color: '#888' },
+  buttonText: { color: colors.background, fontSize: 15, fontWeight: '700' },
+  notice: { fontSize: 14, color: colors.textSecondary },
   deleteButton: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.dangerTint,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.dangerTintBorder,
     paddingVertical: 13,
     alignItems: 'center',
   },
-  deleteButtonText: { color: '#ef4444', fontSize: 15, fontWeight: '700' },
+  deleteButtonText: { color: colors.danger, fontSize: 15, fontWeight: '700' },
 });

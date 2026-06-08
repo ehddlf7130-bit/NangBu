@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { formatDateTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
 import { deleteRecipe, fetchRecipe, updateRecipe } from '@/lib/recipes';
@@ -89,7 +90,7 @@ export default function RecipeDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -115,7 +116,7 @@ export default function RecipeDetailScreen() {
                 <Text style={styles.actionText}>취소</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={handleSave} disabled={saving}>
-                {saving ? <ActivityIndicator color="#3b82f6" /> : <Text style={styles.actionText}>저장</Text>}
+                {saving ? <ActivityIndicator color={colors.primary} /> : <Text style={styles.actionText}>저장</Text>}
               </TouchableOpacity>
             </>
           ) : (
@@ -140,7 +141,7 @@ export default function RecipeDetailScreen() {
               value={title}
               onChangeText={setTitle}
               placeholder="레시피 제목"
-              placeholderTextColor="#bbb"
+              placeholderTextColor={colors.textDisabled}
             />
           </View>
           <View style={styles.field}>
@@ -150,7 +151,7 @@ export default function RecipeDetailScreen() {
               value={body}
               onChangeText={setBody}
               placeholder="재료, 조리 순서 등"
-              placeholderTextColor="#bbb"
+              placeholderTextColor={colors.textDisabled}
               multiline
               textAlignVertical="top"
             />
@@ -168,34 +169,34 @@ export default function RecipeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingTop: 28, gap: 16 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  backText: { fontSize: 15, color: '#3b82f6' },
+  backText: { fontSize: 15, color: colors.primary },
   actions: { flexDirection: 'row', gap: 8 },
   actionButton: { paddingHorizontal: 12, paddingVertical: 6 },
-  actionText: { fontSize: 15, color: '#3b82f6', fontWeight: '600' },
-  deleteText: { fontSize: 15, color: '#ef4444', fontWeight: '600' },
-  recipeTitle: { fontSize: 24, fontWeight: '700', color: '#111' },
-  date: { fontSize: 13, color: '#888', marginTop: -8 },
-  body: { fontSize: 16, color: '#333', lineHeight: 24 },
+  actionText: { fontSize: 15, color: colors.primary, fontWeight: '600' },
+  deleteText: { fontSize: 15, color: colors.danger, fontWeight: '600' },
+  recipeTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  date: { fontSize: 13, color: colors.textSecondary, marginTop: -8 },
+  body: { fontSize: 16, color: colors.textPrimary, lineHeight: 24 },
   field: { gap: 6 },
-  label: { fontSize: 14, fontWeight: '600', color: '#333' },
+  label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 15,
-    color: '#111',
-    backgroundColor: '#fff',
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
   },
   multiline: { minHeight: 160 },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

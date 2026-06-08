@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import CommentList from '@/components/CommentList';
 import ItemDetail from '@/components/ItemDetail';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +46,7 @@ export default function ItemInfoScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -175,7 +176,7 @@ function FriendView({ item, userId }: { item: Item; userId: string | null }) {
           value={text}
           onChangeText={setText}
           placeholder="코멘트를 남겨보세요"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
           editable={!posting}
           multiline
         />
@@ -185,7 +186,7 @@ function FriendView({ item, userId }: { item: Item; userId: string | null }) {
           disabled={posting || !text.trim()}
         >
           {posting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.background} />
           ) : (
             <Text style={styles.postButtonText}>작성</Text>
           )}
@@ -196,24 +197,24 @@ function FriendView({ item, userId }: { item: Item; userId: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 4 },
-  backText: { fontSize: 15, color: '#3b82f6', marginBottom: 4 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111' },
+  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
   body: { flex: 1 },
   bodyContent: { paddingBottom: 20 },
   editButton: {
     marginHorizontal: 20,
     marginTop: 8,
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
   },
-  editText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  editText: { color: colors.background, fontSize: 16, fontWeight: '700' },
   commentSection: { paddingHorizontal: 20, paddingTop: 4, gap: 12 },
-  commentTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
+  commentTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -221,23 +222,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   commentInput: {
     flex: 1,
     maxHeight: 100,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#111',
-    backgroundColor: '#fff',
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
   },
   postButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 18,
     height: 44,
@@ -246,6 +247,6 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   postButtonDisabled: { opacity: 0.5 },
-  postButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  postButtonText: { color: colors.background, fontSize: 15, fontWeight: '700' },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { fetchFriendItems, fetchFriendProfile } from '@/lib/friends';
 import { extractErrorMessage } from '@/lib/items';
 import type { Profile } from '@/types/friend';
@@ -47,7 +48,7 @@ export default function FriendFridgeScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -131,12 +132,12 @@ function EmptyState() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 4 },
-  backText: { fontSize: 15, color: '#3b82f6', marginBottom: 4 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111' },
-  subtitle: { fontSize: 13, color: '#888' },
+  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
+  subtitle: { fontSize: 13, color: colors.textSecondary },
   list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   emptyContainer: { flex: 1 },
   row: {
@@ -144,20 +145,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   rowMain: { gap: 4, flex: 1 },
-  rowName: { fontSize: 16, fontWeight: '600', color: '#111' },
-  rowMeta: { fontSize: 13, color: '#888' },
-  expireText: { fontSize: 13, color: '#888', marginLeft: 8 },
-  expired: { color: '#ef4444', fontWeight: '600' },
-  soon: { color: '#f59e0b', fontWeight: '600' },
+  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowMeta: { fontSize: 13, color: colors.textSecondary },
+  expireText: { fontSize: 13, color: colors.textSecondary, marginLeft: 8 },
+  expired: { color: colors.danger, fontWeight: '600' },
+  soon: { color: colors.warning, fontWeight: '600' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  emptyDesc: { fontSize: 14, color: '#888', textAlign: 'center' },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

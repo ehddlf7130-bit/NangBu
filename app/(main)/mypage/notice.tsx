@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -43,20 +44,20 @@ export default function NoticeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: { paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 4 },
-  backText: { fontSize: 15, color: '#3b82f6', marginBottom: 4 },
-  title: { fontSize: 24, fontWeight: '700', color: '#111' },
+  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   list: { padding: 20, gap: 12 },
   card: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 16,
     gap: 6,
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
-  cardDate: { fontSize: 12, color: '#aaa' },
-  cardBody: { fontSize: 14, color: '#444', lineHeight: 20 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  cardDate: { fontSize: 12, color: colors.textSecondary },
+  cardBody: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
 });

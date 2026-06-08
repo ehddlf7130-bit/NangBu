@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasUnreadNotifications } from '@/lib/notifications';
 import { Ionicons } from '@expo/vector-icons';
@@ -5,11 +6,11 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
-// 임시 디자인 값. 디자인 토큰이 정해지면 여기만 교체하면 된다.
+// 디자인 토큰 사용. 색은 constants/theme.ts 에서만 관리한다.
 // (종은 기본 텍스트 색, 빨간 점은 danger 계열)
 const BELL_SIZE = 24;
-const BELL_COLOR = '#111'; // TODO: theme.text 로 교체
-const BADGE_COLOR = '#ef4444'; // TODO: theme.danger 로 교체
+const BELL_COLOR = colors.textPrimary;
+const BADGE_COLOR = colors.danger;
 const BADGE_SIZE = 9;
 
 /** 상단 헤더 우측에 두는 알림 종 아이콘. 안 읽은 알림이 있으면 빨간 점을 표시한다. */
@@ -52,6 +53,6 @@ const styles = StyleSheet.create({
     borderRadius: BADGE_SIZE / 2,
     backgroundColor: BADGE_COLOR,
     borderWidth: 1.5,
-    borderColor: '#fff',
+    borderColor: colors.background,
   },
 });

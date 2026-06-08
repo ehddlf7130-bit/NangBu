@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { formatDateTime } from '@/lib/format';
 import type { Comment } from '@/types/comment';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -13,7 +14,7 @@ export default function CommentList({ comments, loading, error }: CommentListPro
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#3b82f6" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -45,17 +46,17 @@ const styles = StyleSheet.create({
   center: { paddingVertical: 16, alignItems: 'center' },
   list: { gap: 10 },
   row: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 12,
     gap: 4,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  author: { fontSize: 14, fontWeight: '600', color: '#111' },
-  time: { fontSize: 12, color: '#aaa' },
-  content: { fontSize: 14, color: '#333', lineHeight: 20 },
-  empty: { fontSize: 14, color: '#aaa', textAlign: 'center', paddingVertical: 16 },
-  error: { fontSize: 14, color: '#ef4444', paddingVertical: 8 },
+  author: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  time: { fontSize: 12, color: colors.textSecondary },
+  content: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+  empty: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', paddingVertical: 16 },
+  error: { fontSize: 14, color: colors.danger, paddingVertical: 8 },
 });

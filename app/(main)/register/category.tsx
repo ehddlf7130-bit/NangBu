@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { CATEGORIES } from '@/constants/categories';
 import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -31,12 +32,12 @@ export default function CategoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     paddingHorizontal: 20,
     paddingTop: 32,
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#111', marginBottom: 6 },
-  subtitle: { fontSize: 14, color: '#888', marginBottom: 28 },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 28 },
   list: { gap: 10 },
   item: {
     flexDirection: 'row',
@@ -44,11 +45,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 18,
     paddingHorizontal: 20,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
-  itemText: { fontSize: 17, fontWeight: '500', color: '#111' },
-  arrow: { fontSize: 22, color: '#aaa' },
+  itemText: { fontSize: 17, fontWeight: '500', color: colors.textPrimary },
+  arrow: { fontSize: 22, color: colors.textSecondary },
 });

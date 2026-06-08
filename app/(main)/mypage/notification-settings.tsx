@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractErrorMessage } from '@/lib/items';
 import { fetchMyProfile, updateNotifyComments, updateNotifyExpiry } from '@/lib/profiles';
@@ -59,7 +60,7 @@ export default function NotificationSettingsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -118,11 +119,11 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   header: { paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 4 },
-  backText: { fontSize: 15, color: '#3b82f6', marginBottom: 4 },
-  title: { fontSize: 24, fontWeight: '700', color: '#111' },
+  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   list: { paddingHorizontal: 20, gap: 4 },
   row: {
     flexDirection: 'row',
@@ -130,9 +131,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
   },
   rowText: { flex: 1, gap: 2, marginRight: 12 },
-  rowLabel: { fontSize: 16, fontWeight: '600', color: '#111' },
-  rowDesc: { fontSize: 13, color: '#888' },
+  rowLabel: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowDesc: { fontSize: 13, color: colors.textSecondary },
 });

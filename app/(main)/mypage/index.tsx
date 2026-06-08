@@ -1,3 +1,4 @@
+import { colors, radius } from '@/constants/theme';
 import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractErrorMessage } from '@/lib/items';
@@ -63,7 +64,7 @@ export default function MyPageScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -126,22 +127,22 @@ export default function MyPageScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingTop: 28, gap: 20 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 24, fontWeight: '700', color: '#111' },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   profileCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 16,
     gap: 4,
   },
-  displayName: { fontSize: 18, fontWeight: '700', color: '#111' },
-  username: { fontSize: 14, color: '#3b82f6' },
-  email: { fontSize: 13, color: '#888' },
+  displayName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  username: { fontSize: 14, color: colors.primary },
+  email: { fontSize: 13, color: colors.textSecondary },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -149,11 +150,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   toggleTextWrap: { flex: 1, gap: 2 },
-  toggleLabel: { fontSize: 16, fontWeight: '600', color: '#111' },
-  toggleDesc: { fontSize: 13, color: '#888' },
+  toggleLabel: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  toggleDesc: { fontSize: 13, color: colors.textSecondary },
   menu: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -164,21 +165,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
   },
-  menuLabel: { fontSize: 16, color: '#111' },
-  menuLabelDisabled: { color: '#bbb' },
-  menuRight: { fontSize: 15, color: '#bbb' },
+  menuLabel: { fontSize: 16, color: colors.textPrimary },
+  menuLabelDisabled: { color: colors.textDisabled },
+  menuRight: { fontSize: 15, color: colors.textDisabled },
   logoutButton: {
     alignSelf: 'center',
     paddingHorizontal: 24,
     paddingVertical: 10,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
+    backgroundColor: colors.dangerTint,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.dangerTintBorder,
     marginTop: 8,
   },
-  logoutText: { color: '#ef4444', fontWeight: '600', fontSize: 14 },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  logoutText: { color: colors.danger, fontWeight: '600', fontSize: 14 },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

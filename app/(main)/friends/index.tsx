@@ -1,3 +1,4 @@
+import { colors, radius } from '@/constants/theme';
 import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { addFriend, acceptFriend, fetchFriends, fetchPendingRequests, removeFriend } from '@/lib/friends';
@@ -157,7 +158,7 @@ export default function FriendsScreen() {
           value={username}
           onChangeText={setUsername}
           placeholder="친구 아이디(username) 입력"
-          placeholderTextColor="#bbb"
+          placeholderTextColor={colors.textDisabled}
           autoCapitalize="none"
           autoCorrect={false}
           editable={!adding}
@@ -170,7 +171,7 @@ export default function FriendsScreen() {
           disabled={adding}
         >
           {adding ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.background} />
           ) : (
             <Text style={styles.addButtonText}>요청</Text>
           )}
@@ -179,7 +180,7 @@ export default function FriendsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3b82f6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -234,7 +235,7 @@ function RequestRow({
           disabled={accepting}
         >
           {accepting ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.background} />
           ) : (
             <Text style={styles.acceptText}>수락</Text>
           )}
@@ -275,7 +276,7 @@ function FriendRow({
         <Text style={styles.rowMeta}>@{friend.profile.username}</Text>
       </View>
       {removing ? (
-        <ActivityIndicator size="small" color="#ef4444" />
+        <ActivityIndicator size="small" color={colors.danger} />
       ) : (
         <Text style={styles.rowChevron}>›</Text>
       )}
@@ -294,7 +295,7 @@ function EmptyState() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111',
+    color: colors.textPrimary,
   },
   addBox: {
     flexDirection: 'row',
@@ -318,16 +319,16 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 15,
-    color: '#111',
-    backgroundColor: '#fff',
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
   },
   addButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -335,14 +336,14 @@ const styles = StyleSheet.create({
     minWidth: 64,
   },
   addButtonDisabled: { opacity: 0.6 },
-  addButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  addButtonText: { color: colors.background, fontSize: 15, fontWeight: '700' },
   list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   emptyContainer: { flex: 1 },
   section: { gap: 10, marginBottom: 4 },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#888',
+    color: colors.textSecondary,
     letterSpacing: 0.3,
     marginTop: 4,
     marginBottom: 2,
@@ -352,47 +353,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
-    backgroundColor: '#fffbeb',
+    backgroundColor: colors.warningTint,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#fde68a',
+    borderColor: colors.warningTintBorder,
   },
   requestActions: { flexDirection: 'row', gap: 8 },
   acceptButton: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
     paddingHorizontal: 14,
     paddingVertical: 7,
     minWidth: 52,
     alignItems: 'center',
   },
   rejectButton: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   actionDisabled: { opacity: 0.5 },
-  acceptText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  rejectText: { color: '#64748b', fontSize: 14, fontWeight: '600' },
+  acceptText: { color: colors.background, fontSize: 14, fontWeight: '600' },
+  rejectText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   rowRemoving: { opacity: 0.5 },
   rowMain: { gap: 4, flex: 1 },
-  rowName: { fontSize: 16, fontWeight: '600', color: '#111' },
-  rowMeta: { fontSize: 13, color: '#888' },
-  rowChevron: { fontSize: 22, color: '#cbd5e1', marginLeft: 8 },
+  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowMeta: { fontSize: 13, color: colors.textSecondary },
+  rowChevron: { fontSize: 22, color: colors.textDisabled, marginLeft: 8 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 40 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  emptyDesc: { fontSize: 14, color: '#888', textAlign: 'center' },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

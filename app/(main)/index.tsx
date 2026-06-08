@@ -1,3 +1,4 @@
+import { colors, radius } from '@/constants/theme';
 import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { deleteItem, extractErrorMessage, fetchMyItems } from '@/lib/items';
@@ -69,7 +70,7 @@ export default function FridgeScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -150,7 +151,7 @@ function EmptyState() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
@@ -163,18 +164,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111',
+    color: colors.textPrimary,
   },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   addButton: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
+    backgroundColor: colors.primaryTint,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: colors.primaryTintBorder,
   },
-  addButtonText: { color: '#3b82f6', fontWeight: '600', fontSize: 14 },
+  addButtonText: { color: colors.primary, fontWeight: '600', fontSize: 14 },
   list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   emptyContainer: { flex: 1 },
   row: {
@@ -182,30 +183,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   rowMain: { gap: 4, flex: 1 },
-  rowName: { fontSize: 16, fontWeight: '600', color: '#111' },
-  rowMeta: { fontSize: 13, color: '#888' },
-  expireText: { fontSize: 13, color: '#888', marginLeft: 8 },
-  expired: { color: '#ef4444', fontWeight: '600' },
-  soon: { color: '#f59e0b', fontWeight: '600' },
+  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowMeta: { fontSize: 13, color: colors.textSecondary },
+  expireText: { fontSize: 13, color: colors.textSecondary, marginLeft: 8 },
+  expired: { color: colors.danger, fontWeight: '600' },
+  soon: { color: colors.warning, fontWeight: '600' },
   deleteButton: {
     marginLeft: 12,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
+    backgroundColor: colors.dangerTint,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.dangerTintBorder,
   },
-  deleteText: { color: '#ef4444', fontWeight: '600', fontSize: 13 },
+  deleteText: { color: colors.danger, fontWeight: '600', fontSize: 13 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  emptyDesc: { fontSize: 14, color: '#888', textAlign: 'center' },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { color: colors.danger, fontSize: 15 },
 });

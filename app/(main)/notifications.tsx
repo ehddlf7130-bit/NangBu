@@ -1,3 +1,4 @@
+import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDateTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
@@ -51,7 +52,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -135,12 +136,12 @@ function EmptyState() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111',
+    color: colors.textPrimary,
     paddingHorizontal: 20,
     paddingTop: 28,
     paddingBottom: 12,
@@ -151,29 +152,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
-  rowUnread: { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' },
+  rowUnread: { backgroundColor: colors.primaryTint, borderColor: colors.primaryTintBorder },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     marginTop: 6,
     marginRight: 10,
   },
   rowMain: { flex: 1, gap: 4 },
-  rowText: { fontSize: 15, color: '#444', lineHeight: 21 },
-  rowTextUnread: { color: '#111' },
+  rowText: { fontSize: 15, color: colors.textPrimary, lineHeight: 21 },
+  rowTextUnread: { color: colors.textPrimary },
   bold: { fontWeight: '700' },
-  preview: { fontSize: 13, color: '#888' },
-  time: { fontSize: 12, color: '#aaa' },
+  preview: { fontSize: 13, color: colors.textSecondary },
+  time: { fontSize: 12, color: colors.textSecondary },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  emptyDesc: { fontSize: 14, color: '#888', textAlign: 'center' },
-  errorText: { color: '#ef4444', fontSize: 15 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { color: colors.danger, fontSize: 15 },
 });
