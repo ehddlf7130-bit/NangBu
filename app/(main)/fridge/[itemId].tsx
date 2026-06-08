@@ -59,7 +59,7 @@ export default function ItemDetailScreen() {
           if (!itemId) return;
           try {
             await deleteItem(itemId);
-            router.replace('/(main)' as never);
+            router.replace('/(main)/(tabs)' as never);
           } catch (e: unknown) {
             Alert.alert('오류', e instanceof Error ? e.message : '삭제에 실패했습니다.');
           }
@@ -99,7 +99,8 @@ export default function ItemDetailScreen() {
         contentContainerStyle={styles.bodyContent}
         keyboardShouldPersistTaps="handled"
       >
-        <ItemForm mode="edit" initialValues={initialValues} onSubmit={handleUpdate} scrollable={false} />
+        {/* 탭 화면이라 인스턴스가 유지된다. 다른 재료를 편집할 때 이전 값이 남지 않도록 key로 재마운트. */}
+        <ItemForm key={itemId} mode="edit" initialValues={initialValues} onSubmit={handleUpdate} scrollable={false} />
         <View style={styles.commentSection}>
           <Text style={styles.commentTitle}>코멘트</Text>
           <CommentList comments={comments} loading={commentLoading} error={commentError} />

@@ -1,4 +1,4 @@
-import { colors } from '@/constants/theme';
+import { colors, radius, spacing, typography } from '@/constants/theme';
 import CommentList from '@/components/CommentList';
 import ItemDetail from '@/components/ItemDetail';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +6,7 @@ import { createComment, fetchComments } from '@/lib/comments';
 import { extractErrorMessage, fetchItem } from '@/lib/items';
 import type { Comment } from '@/types/comment';
 import type { Item } from '@/types/item';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -20,6 +21,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+const BACK_ICON_SIZE = 26;
 
 // 재료 정보(읽기 전용) 화면.
 // 내 재료로 진입 → '편집' 버튼(편집 화면으로 이동).
@@ -63,11 +66,11 @@ export default function ItemInfoScreen() {
 
   return (
     <View style={styles.container}>
+      {/* 1. 헤더: 뒤로가기만 (제목 없음) */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>‹ 뒤로</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+          <Ionicons name="chevron-back" size={BACK_ICON_SIZE} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
       </View>
 
       {isOwner ? (
@@ -198,30 +201,32 @@ function FriendView({ item, userId }: { item: Item; userId: string | null }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: { paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 4 },
-  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  header: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.sm,
+  },
   body: { flex: 1 },
-  bodyContent: { paddingBottom: 20 },
+  bodyContent: { paddingBottom: spacing.lg },
   editButton: {
-    marginHorizontal: 20,
-    marginTop: 8,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 15,
+    borderRadius: radius.card,
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
-  editText: { color: colors.background, fontSize: 16, fontWeight: '700' },
-  commentSection: { paddingHorizontal: 20, paddingTop: 4, gap: 12 },
-  commentTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  editText: { ...typography.body, color: colors.background, fontWeight: typography.heading1.fontWeight },
+  commentSection: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs, gap: spacing.sm, marginTop: spacing.md },
+  commentTitle: { ...typography.heading2, color: colors.textPrimary },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     backgroundColor: colors.background,
   },
@@ -230,23 +235,23 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    ...typography.body,
     color: colors.textPrimary,
     backgroundColor: colors.background,
   },
   postButton: {
     backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 18,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 60,
   },
   postButtonDisabled: { opacity: 0.5 },
-  postButtonText: { color: colors.background, fontSize: 15, fontWeight: '700' },
-  errorText: { color: colors.danger, fontSize: 15 },
+  postButtonText: { ...typography.body, color: colors.background, fontWeight: typography.heading1.fontWeight },
+  errorText: { ...typography.body, color: colors.danger },
 });

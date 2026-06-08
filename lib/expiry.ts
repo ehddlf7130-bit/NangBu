@@ -1,8 +1,39 @@
 import { supabase } from './supabase';
+import { colors } from '@/constants/theme';
 import type { CategoryExpiry } from '@/types/expiry';
 import { masterDaysFor } from '@/types/ingredient';
 import type { IngredientMaster } from '@/types/ingredient';
 import type { StorageType } from '@/types/item';
+
+// D-day 상태 임계값 (일수). 이 값 기준으로 상태 색(getDdayColor)이 갈린다.
+export const DDAY_DANGER_THRESHOLD = 3;   // dday <= 3 → danger
+export const DDAY_WARNING_THRESHOLD = 14; // dday <= 14 → warning
+
+/**
+ * 오늘부터 소비기한까지 남은 일수(달력 기준).
+ * 양수=아직 남음, 0=오늘까지, 음수=지남.
+ * 시·분 영향 없이 날짜만 비교하기 위해 둘 다 자정으로 맞춘다.
+ */
+export function getDday(expireDate: string): number {
+  const [y, m, d] = expireDate.split('T')[0].split('-').map(Number);
+  const target = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  return Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
+}
+
+/**
+ * D-day에 따른 상태 색(theme 토큰 반환).
+ *   dday <= 3  → danger
+ *   dday <= 14 → warning
+ *   그 외       → primary
+ */
+export function getDdayColor(dday: number): string {
+  if (dday <= DDAY_DANGER_THRESHOLD) return colors.danger;
+  if (dday <= DDAY_WARNING_THRESHOLD) return colors.warning;
+  return colors.primary;
+}
 
 /** 한 카테고리의 보관방식별 소비기한 설정 전체 조회 (설정 화면용). */
 export async function fetchCategoryExpiries(

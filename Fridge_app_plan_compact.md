@@ -1,7 +1,7 @@
 # NangBu 냉장고 앱 — 개발 지침서 (압축판)
 
 > Claude Code용. 이 파일을 기준으로 개발 지시.
-> **기준일: 2026-06-05 (회원 탈퇴 완료)**
+> **기준일: 2026-06-09 (디자인 토큰 시스템 도입 / 파일↔화면 매핑 재정리)**
 
 ---
 
@@ -24,7 +24,8 @@
 | ✅ | **레시피 AI 추천(§13-5)** — Edge Function(recommend-recipe) + Gemini 2.5 Flash |
 | ✅ | **알림 진입점 종 아이콘화(§14)** — 하단 탭에서 알림 제거(4탭), 각 화면 헤더 우측 `NotificationBell`(안 읽음 빨간 점) |
 | ✅ | **회원 탈퇴(§15)** — DB RPC `delete_own_account()`(SECURITY DEFINER) + FK CASCADE. 프로필 수정 화면에 배치 |
-| ⬜ | UX/UI 디자인 적용 |
+| 🟡 | **디자인 토큰 시스템 도입** — `constants/theme.ts`에 `colors`/`radius`/`spacing`/`typography`/`button` 토큰 정의. 전 화면이 하드코딩 색 대신 토큰 참조. (일부 값은 ⚠️ 추정값, 디자이너 검수 대기) |
+| ⬜ | UX/UI 디자인 적용(토큰 확정값 반영 + 컴포넌트 비주얼 정리) |
 | 보류 | 푸시 알림(Expo Notifications), 사용자 정의 카테고리 |
 
 ---
@@ -68,38 +69,104 @@
 
 ---
 
-## 5. 화면 구조 (v2 실제)
+## 5. 화면 구조 — 파일 ↔ 화면 매핑 (실제 코드 기준, UX/UI 작업용)
+
+> 아래 표가 **단일 출처**. 어떤 화면을 만질지 정할 때 이 표에서 파일을 찾는다. (Expo Router = 파일 경로가 곧 라우트)
+
+### 5-1. 라우팅 골격 (화면 아님 / 건드릴 일 적음)
+
+| 파일 | 역할 |
+|------|------|
+| `app/_layout.tsx` | 루트. `AuthProvider` + `AuthRedirect`(세션 감시해 (auth)↔(main) 자동 전환) + 최상위 Stack. `console.log` 잔존(§10-5) |
+| `app/index.tsx` | 세션 유무에 따라 `(main)`/`(auth)/login`으로 `Redirect`만 함. UI는 로딩 스피너뿐 |
+| `app/(auth)/_layout.tsx` | 인증 그룹 Stack |
+| `app/(main)/_layout.tsx` | **하단 탭바 정의**(4탭). 탭=냉장고/커뮤니티/레시피/마이페이지. 나머지 화면은 `href:null`로 탭에서 숨기고 `router.push`로만 진입. **탭 아이콘·활성색(`colors.primary`)이 여기 있음** |
+
+### 5-2. 인증 화면
+
+| 화면 | 파일 |
+|------|------|
+| 로그인 | `app/(auth)/login.tsx` — 이메일/비번 입력, `useAuth().signIn` |
+| 회원가입 | `app/(auth)/signup.tsx` — 이메일/비번/username/display_name, `signUp` |
+
+### 5-3. 탭 화면 (하단 탭으로 직접 진입, 각 화면 헤더 우측에 `NotificationBell`)
+
+| 탭 | 파일 | 화면 내용 |
+|----|------|-----------|
+| 🧊 냉장고 | `app/(main)/index.tsx` | **첫 화면=나의 냉장고 목록**(FlatList). 헤더에 제목+종+`＋추가`. 행 탭→`item/[id]`, 삭제 버튼, 임박/만료 색 표시, 빈 상태 |
+| 👥 커뮤니티 | `app/(main)/friends/index.tsx` | 친구 목록 + username으로 친구 요청 + **받은 요청 수락/거절** + 길게눌러 삭제. 행 탭→`friends/[friendId]` |
+| 🍳 레시피 | `app/(main)/recipes/index.tsx` | 내 레시피 목록. 헤더에 종+`＋추가`. 행 탭→`recipes/[recipeId]` |
+| 👤 마이페이지 | `app/(main)/mypage/index.tsx` | 프로필 요약 + **냉장고 공개 토글** + 메뉴 4개(프로필수정/알림설정/기본소비기한/공지) + 로그아웃 |
+
+### 5-4. 식재료 등록 흐름 (3단계, `register/`)
+
+| 단계 | 파일 | 내용 |
+|------|------|------|
+| ① 카테고리 | `app/(main)/register/category.tsx` | `constants/categories.ts`의 21개 카테고리 리스트 → 선택 시 ingredient로 |
+| ② 표준 재료 | `app/(main)/register/ingredient.tsx` | `ingredient_master`에서 해당 카테고리 재료 목록. **`+ 직접 입력`** 버튼으로 ②를 건너뛰어 ③로 바이패스 가능 |
+| ③ 등록 폼 | `app/(main)/register/new.tsx` | `ItemForm`(create). 표준 재료로 왔으면 이름·보관팁 프리필 + 권장 보관방식 기본선택 + 비권장 칩 비활성. 유통기한 자동채움(`resolveExpiry`) |
+
+### 5-5. 식재료 상세·편집 (`item/`, `fridge/`)
+
+| 화면 | 파일 | 내용 |
+|------|------|------|
+| 재료 정보(읽기 전용) | `app/(main)/item/[itemId].tsx` | **소유 여부로 분기**: 내 재료=`ItemDetail`+`편집`버튼+코멘트(읽기) / 친구 재료=`ItemDetail`+코멘트 목록·작성. 냉장고/친구 냉장고/알림에서 모두 여기로 진입 |
+| 재료 편집 | `app/(main)/fridge/[itemId].tsx` | `ItemForm`(edit) + 삭제 + 코멘트(읽기). `item/[id]`의 편집 버튼에서만 진입 |
+
+### 5-6. 친구 냉장고 (`friends/[friendId]`)
+
+| 화면 | 파일 | 내용 |
+|------|------|------|
+| 친구 냉장고(readonly) | `app/(main)/friends/[friendId].tsx` | 친구 프로필 + 품목 목록. 비공개면 🔒 안내. 행 탭→`item/[id]`(코멘트 작성) |
+
+### 5-7. 레시피 상세·추가 (`recipes/`)
+
+| 화면 | 파일 | 내용 |
+|------|------|------|
+| 레시피 추가 | `app/(main)/recipes/new.tsx` | 모드 분기 화면. `choose`(직접작성/AI추천 선택) → `manual`(폼) / `ai`(냉장고 재료 선택→추천→미리보기→저장) |
+| 레시피 상세 | `app/(main)/recipes/[recipeId].tsx` | 보기 + 인라인 편집(제목/본문) + 삭제 |
+
+### 5-8. 알림 (`notifications`)
+
+| 화면 | 파일 | 내용 |
+|------|------|------|
+| 알림 목록 | `app/(main)/notifications.tsx` | 탭에서 제외(`href:null`), **각 화면 헤더 종 아이콘(`NotificationBell`)으로만 진입**. 항목 탭 시 읽음 처리 후 이동: `friend_accepted`→`friends/[actor_id]`, 그 외(코멘트)→`item/[item_id]` |
+
+### 5-9. 마이페이지 하위 화면 (`mypage/`)
+
+| 화면 | 파일 | 내용 |
+|------|------|------|
+| 프로필 수정 | `app/(main)/mypage/profile.tsx` | display_name·비밀번호 변경 + **회원 탈퇴 버튼(§15)** |
+| 알림 설정 | `app/(main)/mypage/notification-settings.tsx` | 코멘트 알림/소비기한 알림 토글(profiles 플래그) |
+| 기본 소비기한 — 카테고리 | `app/(main)/mypage/expiry/category.tsx` | 21개 카테고리 리스트 → `expiry/[category]` |
+| 기본 소비기한 — 상세 | `app/(main)/mypage/expiry/[category].tsx` | 보관방식별 일수 입력/저장/삭제(`category_expiry` upsert) |
+| 공지사항 | `app/(main)/mypage/notice.tsx` | 정적 공지 목록(아직 하드코딩 배열) |
+
+### 5-10. 화면이 아닌 코드 (공통 컴포넌트·로직·토큰)
 
 ```
-app/
-  _layout.tsx          # AuthProvider + AuthRedirect + Stack
-  index.tsx            # 세션 → Redirect
-  (auth)/              login.tsx / signup.tsx
-  (main)/
-    _layout.tsx        # 하단 탭: 냉장고/커뮤니티/레시피/마이페이지 (알림은 탭에서 제외, href:null 유지)
-    index.tsx          # 나의 냉장고 목록 (첫 화면)
-    register/          category.tsx / ingredient.tsx / new.tsx (등록 3단계 흐름)
-    item/[itemId].tsx  # 재료 정보 (읽기 전용) — 내 재료=편집버튼, 친구재료=코멘트작성
-    fridge/[itemId].tsx # 편집 전용 + 삭제
-    friends/           index.tsx / [friendId].tsx (친구 냉장고 readonly)
-    recipes/           index.tsx / new.tsx / [recipeId].tsx
-    notifications.tsx  # 탭에서 제외(href:null). 각 화면 헤더 종 아이콘으로 진입
-    mypage/            index.tsx / profile.tsx / notification-settings.tsx / notice.tsx
-                       expiry/ (category.tsx / [category].tsx)
-
-components/  ItemForm.tsx(create|edit|readonly) · ItemDetail.tsx · CommentList.tsx · NotificationBell.tsx
-lib/         supabase · items · profiles · friends · comments · notifications · recipes · expiry · format · ingredients · account
-types/       item · friend · comment · notification · recipe · expiry · ingredient
-constants/   categories.ts (단일 출처, 21개)
+components/
+  ItemForm.tsx        # 등록·편집 공용 폼(create|edit|readonly). §6 참고
+  ItemDetail.tsx      # 재료 정보 읽기 전용 표시(item 화면에서 사용)
+  CommentList.tsx     # 코멘트 목록 렌더
+  NotificationBell.tsx# 헤더 우측 종+빨간점. 색은 theme 토큰 참조, 누르면 알림 화면
+contexts/AuthContext.tsx   # 세션·user 전역 상태 + signIn/signUp/signOut (useAuth)
+hooks/use-color-scheme.ts(.web.ts)  # 라이트/다크 감지(현재 거의 미사용)
+lib/    supabase · items · profiles · friends · comments · notifications · recipes · expiry · format · ingredients · account
+types/  item · friend · comment · notification · recipe · expiry · ingredient
+constants/  categories.ts(21개 단일 출처) · theme.ts(★디자인 토큰: colors/radius/spacing/typography/button)
 supabase_schema.sql
 ```
 
-**핵심 흐름:**
-- 진입: 로그인 → 나의 냉장고 목록
-- **등록(§13-7 적용):** 냉장고 → 카테고리 선택 → **표준 재료 선택**(`register/ingredient`) → 등록(`register/new`, 이름·보관팁 프리필 + 비권장 보관방식 비활성) / 직접 입력 버튼으로 바이패스 가능
+**UX/UI 작업 시 진입점:** 색·간격·라운드·타이포는 전부 `constants/theme.ts` 토큰을 거친다(현재 일부 ⚠️ 추정값). 화면별 레이아웃/스타일은 각 화면 파일 하단의 `StyleSheet.create`에 있다.
+
+**핵심 흐름 (요약):**
+- 진입: 로그인 → 나의 냉장고 목록(`(main)/index`)
+- 등록(§13-7): `register/category` → `register/ingredient`(표준 재료 / `+직접 입력` 바이패스) → `register/new`
 - 내 재료 편집: 목록 → `item/[id]`(정보) → 편집 버튼 → `fridge/[id]`(편집)
-- 친구 코멘트: 커뮤니티 → 친구 냉장고 → 재료 → `item/[id]`(코멘트 작성)
-- 코멘트 → 알림: insert → `handle_new_comment` 트리거 → notifications 생성(notify_comments=true인 경우만)
+- 친구 코멘트: 커뮤니티 → `friends/[friendId]`(친구 냉장고) → 품목 → `item/[id]`(코멘트 작성)
+- 코멘트 → 알림: insert → `handle_new_comment` 트리거 → notifications 생성(notify_comments=true만)
+- 알림 진입: 어느 탭 화면이든 헤더 종(`NotificationBell`) → `notifications` → 항목 탭 시 `item/[id]` 또는 `friends/[actor_id]`
 - 소비기한 자동채움: `resolveExpiryDays` → ① category_expiry 개인값 → ② ingredient_master 일수(>0) → ③ null(빈칸 유지)
 
 ---
@@ -204,6 +271,7 @@ supabase_schema.sql
 ## 10. 정리 대상 (§10-5)
 
 - `components/`의 Expo 스타터 잔존물(external-link, haptic-tab, hello-wave 등) 삭제
-- `constants/theme.ts` 삭제 — 단, 디자인 토큰 도입 시 `NotificationBell` 등의 임시 상수(BELL_COLOR/BADGE_COLOR…)를 토큰으로 교체하는 작업과 함께 정리
-- `console.log` 제거 (AuthContext, index, _layout 등)
-- 알림 클릭 이동 경로: `fridge/[id]` → `item/[id]` 변경 검토
+- ~~`constants/theme.ts` 삭제~~ → **무효.** theme.ts는 삭제 대신 **디자인 토큰 정식 도입처**가 됨(colors/radius/spacing/typography/button). `NotificationBell`의 임시 상수도 토큰 참조로 전환 완료. 남은 일은 ⚠️ 추정값을 디자이너 확정값으로 교체하는 것
+- `console.log` 제거 (AuthContext, index, _layout 등) — 아직 남아 있음
+- ~~알림 클릭 이동 경로: `fridge/[id]` → `item/[id]` 변경 검토~~ → **완료.** `notifications.tsx`가 코멘트 알림은 `item/[id]`, 친구수락 알림은 `friends/[actor_id]`로 이동
+- `hooks/use-color-scheme` : 다크모드 미사용이면 정리 검토

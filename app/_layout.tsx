@@ -25,8 +25,8 @@ function AuthRedirect() {
       router.replace('/(auth)/login');
     } else if (session && !inMainGroup) {
       // 앱 재시작(index) 또는 로그인 후(auth 그룹) 모두 처리
-      console.log('[AuthRedirect] → /(main)');
-      router.replace('/(main)');
+      console.log('[AuthRedirect] → /(main)/(tabs)');
+      router.replace('/(main)/(tabs)');
     } else {
       console.log('[AuthRedirect] 이미 올바른 위치, 이동 없음');
     }

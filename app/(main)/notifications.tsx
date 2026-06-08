@@ -1,9 +1,10 @@
-import { colors } from '@/constants/theme';
+import { colors, radius, spacing, typography } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatDateTime } from '@/lib/format';
+import { formatRelativeTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
 import { fetchNotifications, markNotificationRead } from '@/lib/notifications';
 import type { AppNotification } from '@/types/notification';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -14,6 +15,26 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+const THUMB_SIZE = 40; // 시안 고정 치수
+const UNREAD_DOT_SIZE = 7;
+const BACK_ICON_SIZE = 26;
+
+// 타입별 제목/본문 생성. (타입·라우팅·읽음 로직은 그대로, 시안 레이아웃에 맞춰 제목/본문으로만 분리)
+function notificationContent(n: AppNotification): { title: string; body: string | null } {
+  if (n.type === 'friend_accepted') {
+    const actorName = n.actor?.display_name ?? '친구';
+    return { title: `${actorName}님과 친구가 되었어요`, body: '친구 요청을 수락했어요.' };
+  }
+  // comment
+  const author = n.comment?.author?.display_name ?? '친구';
+  const itemName = n.item?.name ?? '품목';
+  const content = n.comment?.content;
+  return {
+    title: `${itemName}에 새 코멘트`,
+    body: content ? `${author}: ${content}` : `${author}님이 코멘트를 남겼어요.`,
+  };
+}
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
@@ -49,34 +70,42 @@ export default function NotificationsScreen() {
     }
   }
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>알림</Text>
-      <FlatList
-        data={notifications}
-        keyExtractor={(n) => n.id}
-        contentContainerStyle={notifications.length === 0 ? styles.emptyContainer : styles.list}
-        ListEmptyComponent={<EmptyState />}
-        renderItem={({ item }) => (
-          <NotificationRow notification={item} onPress={() => handlePress(item)} />
-        )}
-      />
+      <Header />
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(n) => n.id}
+          contentContainerStyle={notifications.length === 0 ? styles.emptyContainer : styles.list}
+          ListEmptyComponent={<EmptyState />}
+          renderItem={({ item }) => (
+            <NotificationRow notification={item} onPress={() => handlePress(item)} />
+          )}
+        />
+      )}
+    </View>
+  );
+}
+
+function Header() {
+  return (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backButton}>
+        <Ionicons name="chevron-back" size={BACK_ICON_SIZE} color={colors.textPrimary} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>알림</Text>
+      {/* 제목을 가운데 정렬하기 위한 좌우 균형용 여백 */}
+      <View style={styles.backButton} />
     </View>
   );
 }
@@ -89,37 +118,23 @@ function NotificationRow({
   onPress: () => void;
 }) {
   const unread = !notification.is_read;
-
-  if (notification.type === 'friend_accepted') {
-    const actorName = notification.actor?.display_name ?? '친구';
-    return (
-      <TouchableOpacity style={[styles.row, unread && styles.rowUnread]} onPress={onPress}>
-        {unread && <View style={styles.unreadDot} />}
-        <View style={styles.rowMain}>
-          <Text style={[styles.rowText, unread && styles.rowTextUnread]}>
-            <Text style={styles.bold}>{actorName}</Text>님이 친구 요청을 수락했어요
-          </Text>
-          <Text style={styles.time}>{formatDateTime(notification.created_at)}</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  }
-
-  const author = notification.comment?.author?.display_name ?? '친구';
-  const itemName = notification.item?.name ?? '품목';
-  const content = notification.comment?.content;
+  const { title, body } = notificationContent(notification);
 
   return (
-    <TouchableOpacity style={[styles.row, unread && styles.rowUnread]} onPress={onPress}>
-      {unread && <View style={styles.unreadDot} />}
+    <TouchableOpacity style={styles.row} onPress={onPress}>
+      <View style={styles.thumb} />
+
       <View style={styles.rowMain}>
-        <Text style={[styles.rowText, unread && styles.rowTextUnread]}>
-          {author}님이 <Text style={styles.bold}>{itemName}</Text>에 코멘트를 남겼어요
-        </Text>
-        {content ? (
-          <Text style={styles.preview} numberOfLines={1}>”{content}”</Text>
+        <View style={styles.titleLine}>
+          <View style={styles.titleLeft}>
+            {unread && <View style={styles.unreadDot} />}
+            <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          </View>
+          <Text style={styles.time}>{formatRelativeTime(notification.created_at)}</Text>
+        </View>
+        {body ? (
+          <Text style={styles.body} numberOfLines={2}>{body}</Text>
         ) : null}
-        <Text style={styles.time}>{formatDateTime(notification.created_at)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -138,43 +153,67 @@ function EmptyState() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 12,
+
+  // 헤더: 좌측 뒤로가기 + 가운데 제목
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
+  backButton: { width: BACK_ICON_SIZE + spacing.sm, alignItems: 'flex-start' },
+  headerTitle: { ...typography.heading2, color: colors.textPrimary },
+
+  list: { paddingBottom: spacing.xl },
   emptyContainer: { flex: 1 },
+
+  // 알림 행
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
     backgroundColor: colors.background,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  rowUnread: { backgroundColor: colors.primaryTint, borderColor: colors.primaryTintBorder },
+  thumb: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: radius.sm,
+    backgroundColor: colors.thumbnail,
+  },
+  rowMain: { flex: 1, marginLeft: spacing.md, gap: spacing.xs },
+  titleLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  titleLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: UNREAD_DOT_SIZE,
+    height: UNREAD_DOT_SIZE,
+    borderRadius: UNREAD_DOT_SIZE / 2,
     backgroundColor: colors.primary,
-    marginTop: 6,
-    marginRight: 10,
   },
-  rowMain: { flex: 1, gap: 4 },
-  rowText: { fontSize: 15, color: colors.textPrimary, lineHeight: 21 },
-  rowTextUnread: { color: colors.textPrimary },
-  bold: { fontWeight: '700' },
-  preview: { fontSize: 13, color: colors.textSecondary },
-  time: { fontSize: 12, color: colors.textSecondary },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
+  title: {
+    ...typography.body,
+    fontWeight: typography.heading2.fontWeight,
+    color: colors.textPrimary,
+    flexShrink: 1,
+  },
+  time: { ...typography.caption, color: colors.textSecondary },
+  body: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
+
+  // 빈 상태
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
-  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-  errorText: { color: colors.danger, fontSize: 15 },
+  emptyTitle: { ...typography.heading2, color: colors.textPrimary },
+  emptyDesc: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { ...typography.body, color: colors.danger },
 });

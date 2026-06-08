@@ -1,61 +1,19 @@
-import { colors } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 
+// (main) = Stack. 탭 묶음((tabs))을 첫 화면으로 두고, 상세 화면들은 그 위로 push된다.
+// 이렇게 해야 상세 화면에서 화면을 왼쪽으로 밀어(iOS 엣지 스와이프) 뒤로가기가 동작한다.
+// (Android는 시스템 뒤로가기로 동일하게 pop)
 export default function MainLayout() {
   return (
-    <Tabs
+    <Stack
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        gestureEnabled: true, // 스와이프 뒤로가기
       }}
     >
-      {/* 하단 탭: 냉장고 / 커뮤니티 / 레시피 / 마이페이지 */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: '냉장고',
-          tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="friends/index"
-        options={{
-          title: '커뮤니티',
-          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="recipes/index"
-        options={{
-          title: '레시피',
-          tabBarIcon: ({ color, size }) => <Ionicons name="restaurant-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="mypage/index"
-        options={{
-          title: '마이페이지',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
-        }}
-      />
-
-      {/* 탭에는 노출하지 않지만 router.push로 이동하는 화면들 */}
-      <Tabs.Screen name="notifications" options={{ href: null }} />
-      <Tabs.Screen name="item/[itemId]" options={{ href: null }} />
-      <Tabs.Screen name="register/category" options={{ href: null }} />
-      <Tabs.Screen name="register/ingredient" options={{ href: null }} />
-      <Tabs.Screen name="register/new" options={{ href: null }} />
-      <Tabs.Screen name="fridge/[itemId]" options={{ href: null }} />
-      <Tabs.Screen name="friends/[friendId]" options={{ href: null }} />
-      <Tabs.Screen name="recipes/new" options={{ href: null }} />
-      <Tabs.Screen name="recipes/[recipeId]" options={{ href: null }} />
-      <Tabs.Screen name="mypage/profile" options={{ href: null }} />
-      <Tabs.Screen name="mypage/notification-settings" options={{ href: null }} />
-      <Tabs.Screen name="mypage/notice" options={{ href: null }} />
-      <Tabs.Screen name="mypage/expiry/category" options={{ href: null }} />
-      <Tabs.Screen name="mypage/expiry/[category]" options={{ href: null }} />
-    </Tabs>
+      <Stack.Screen name="(tabs)" />
+      {/* 나머지 상세 화면(item/[itemId], fridge/[itemId], register/*, friends/[friendId],
+          recipes/new, recipes/[recipeId], notifications, mypage/* )은 파일 경로로 자동 등록된다. */}
+    </Stack>
   );
 }

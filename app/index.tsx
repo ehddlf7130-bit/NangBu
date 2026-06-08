@@ -16,6 +16,6 @@ export default function Index() {
     );
   }
 
-  console.log(`[Index] <Redirect> → ${session ? '/(main)' : '/(auth)/login'}`);
-  return session ? <Redirect href="/(main)" /> : <Redirect href="/(auth)/login" />;
+  console.log(`[Index] <Redirect> → ${session ? '/(main)/(tabs)' : '/(auth)/login'}`);
+  return session ? <Redirect href="/(main)/(tabs)" /> : <Redirect href="/(auth)/login" />;
 }

@@ -24,9 +24,17 @@ export default function RegisterNewScreen() {
   const [loading, setLoading] = useState(!!ingredientId);
 
   // 표준 재료를 골라서 들어온 경우에만 마스터 행을 로드(프리필·자동 유통기한용).
+  // 이 화면은 탭 네비게이터에 속해 마운트가 유지되므로, 재진입(다음 등록) 때
+  // ingredientId가 바뀌면 이전 선택값을 반드시 비우고 다시 로드한다.
   useEffect(() => {
-    if (!ingredientId) return;
+    if (!ingredientId) {
+      setIngredient(null); // 직접 입력 경로 — 프리필 없음
+      setLoading(false);
+      return;
+    }
     let active = true;
+    setLoading(true);
+    setIngredient(null); // 이전 재료 잔존 방지(프리필이 옛 값으로 섞이는 것 차단)
     fetchIngredientById(ingredientId)
       .then((ing) => {
         if (active) setIngredient(ing);
@@ -43,7 +51,7 @@ export default function RegisterNewScreen() {
   async function handleSubmit(values: ItemFormValues) {
     if (!user) throw new Error('로그인이 필요합니다.');
     await createItem(user.id, values, ingredient?.id ?? null);
-    router.replace('/(main)' as never);
+    router.replace('/(main)/(tabs)' as never);
   }
 
   // 유통기한 자동 채움: ① 개인값 → ② 마스터 일수(>0) → ③ 빈칸 (§13-7).
@@ -89,7 +97,10 @@ export default function RegisterNewScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>식품 등록</Text>
+      {/* 탭 화면이라 인스턴스가 유지된다. 등록 건이 바뀌면 key로 강제 재마운트해
+          ItemForm이 새 initialValues를 다시 읽도록 한다(프리필 갱신). */}
       <ItemForm
+        key={`${category ?? ''}:${ingredientId ?? 'manual'}`}
         mode="create"
         initialValues={initialValues}
         onSubmit={handleSubmit}

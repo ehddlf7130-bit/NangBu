@@ -11,7 +11,7 @@ const CORS_HEADERS = {
 
 const GEMINI_ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_MS = 30_000;
 
 interface FridgeItem {
   name: string;
