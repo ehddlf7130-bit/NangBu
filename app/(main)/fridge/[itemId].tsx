@@ -1,5 +1,5 @@
 import { colors, radius } from '@/constants/theme';
-import CommentList from '@/components/CommentList';
+import CommentCardList from '@/components/CommentCardList';
 import ItemForm from '@/components/ItemForm';
 import { fetchComments } from '@/lib/comments';
 import { deleteItem, extractErrorMessage, fetchItem, itemToFormValues, updateItem } from '@/lib/items';
@@ -103,7 +103,7 @@ export default function ItemDetailScreen() {
         <ItemForm key={itemId} mode="edit" initialValues={initialValues} onSubmit={handleUpdate} scrollable={false} />
         <View style={styles.commentSection}>
           <Text style={styles.commentTitle}>코멘트</Text>
-          <CommentList comments={comments} loading={commentLoading} error={commentError} />
+          <CommentCardList comments={comments} loading={commentLoading} error={commentError} />
         </View>
       </ScrollView>
     </View>

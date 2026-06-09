@@ -1,7 +1,8 @@
 // 냉장고 메인 화면 (로그인 후 첫 화면 · 하단 탭의 '냉장고' 탭).
 // 헤더(로고+알림종+추가) · 필터 탭(전체/냉장/냉동/실온) · 개수+정렬 행 · 재료 목록(FridgeItemRow)을 그린다.
 // 행을 길게 누르면 삭제, 우상단 정렬 버튼으로 SortSheet 바텀시트를 띄운다.
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors, spacing, typography } from '@/constants/theme';
+import AddButton from '@/components/AddButton';
 import FridgeItemRow from '@/components/FridgeItemRow';
 import NotificationBell from '@/components/NotificationBell';
 import SortSheet, { SORT_LABELS, type SortKey } from '@/components/SortSheet';
@@ -132,12 +133,11 @@ export default function FridgeScreen() {
         <Text style={styles.logo}>냉부</Text>
         <View style={styles.headerActions}>
           <NotificationBell />
-          <TouchableOpacity
-            style={styles.addButton}
+          <AddButton
             onPress={() => router.push('/(main)/register/ingredient' as never)}
-          >
-            <Text style={styles.addButtonText}>＋ 추가</Text>
-          </TouchableOpacity>
+            size={28}
+            accessibilityLabel="재료 추가"
+          />
         </View>
       </View>
 
@@ -229,15 +229,6 @@ const styles = StyleSheet.create({
   },
   logo: { ...typography.heading1, color: colors.textPrimary }, // 헤더 왼쪽 '냉부' 로고 글자
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md }, // 헤더 오른쪽 묶음(알림 종 + 추가 버튼)을 가로로 나란히
-  addButton: { // '＋ 추가' 버튼의 배경·테두리 모양
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryTint,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.primaryTintBorder,
-  },
-  addButtonText: { ...typography.caption, color: colors.primary, fontWeight: typography.heading2.fontWeight }, // '＋ 추가' 버튼 안 글자
 
   // 필터 탭
   filterRow: { // 필터 탭 4개를 가로로 늘어놓는 줄(아래쪽 얇은 구분선 포함)

@@ -1,4 +1,5 @@
-import { colors, radius } from '@/constants/theme';
+import { colors } from '@/constants/theme';
+import AddButton from '@/components/AddButton';
 import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDateTime } from '@/lib/format';
@@ -58,12 +59,11 @@ export default function RecipesScreen() {
         <Text style={styles.title}>레시피</Text>
         <View style={styles.headerActions}>
           <NotificationBell />
-          <TouchableOpacity
-            style={styles.addButton}
+          <AddButton
             onPress={() => router.push('/(main)/recipes/new' as never)}
-          >
-            <Text style={styles.addButtonText}>＋ 추가</Text>
-          </TouchableOpacity>
+            size={28}
+            accessibilityLabel="레시피 추가"
+          />
         </View>
       </View>
       <FlatList
@@ -111,15 +111,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  addButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: colors.primaryTint,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.primaryTintBorder,
-  },
-  addButtonText: { color: colors.primary, fontWeight: '600', fontSize: 14 },
   list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   emptyContainer: { flex: 1 },
   row: {

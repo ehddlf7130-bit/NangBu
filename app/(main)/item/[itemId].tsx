@@ -2,7 +2,7 @@
 // 주소(URL)의 itemId로 어떤 재료인지 알아내 서버에서 그 재료를 불러온다.
 // 같은 화면이지만 내 재료면 '편집' 버튼(OwnerView), 친구 재료면 코멘트 작성칸(FriendView)을 보여준다.
 import { colors, radius, spacing, typography } from '@/constants/theme';
-import CommentList from '@/components/CommentList';
+import CommentCardList from '@/components/CommentCardList';
 import ItemDetail from '@/components/ItemDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { createComment, fetchComments } from '@/lib/comments';
@@ -124,7 +124,7 @@ function OwnerView({ item }: { item: Item }) {
       {/* ── 코멘트 목록 (읽기 전용) ── */}
       <View style={styles.commentSection}>
         <Text style={styles.commentTitle}>코멘트</Text>
-        <CommentList comments={comments} loading={commentLoading} error={commentError} />
+        <CommentCardList comments={comments} loading={commentLoading} error={commentError} />
       </View>
     </ScrollView>
   );
@@ -181,7 +181,7 @@ function FriendView({ item, userId }: { item: Item; userId: string | null }) {
         {/* ── 코멘트 목록 ── */}
         <View style={styles.commentSection}>
           <Text style={styles.commentTitle}>코멘트</Text>
-          <CommentList comments={comments} loading={commentLoading} error={commentError} />
+          <CommentCardList comments={comments} loading={commentLoading} error={commentError} />
         </View>
       </ScrollView>
 
