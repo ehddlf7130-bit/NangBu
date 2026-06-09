@@ -1,3 +1,6 @@
+// 재료 한 개의 정보를 "보기 전용"으로 예쁘게 그려주는 부품(컴포넌트).
+// 재료 정보 화면(item/[itemId])이 위쪽에 이 부품을 놓아 사진·이름·소비기한·보관 팁을 보여준다.
+// 위에서부터: 큰 이미지 자리 / 이름+보관방식 / 소비기한+상태점 / 안내 박스 / 보관 팁 순으로 그린다.
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { getDday, getDdayColor } from '@/lib/expiry';
 import { formatExpireDate } from '@/lib/format';
@@ -11,14 +14,15 @@ const STATUS_DOT_SIZE = 10;
 const NOTICE_TEXT = '표준 보관 정보는 참고용이에요. 식품 상태를 직접 확인해 주세요.';
 
 /** 품목 정보를 읽기 전용으로 표시하는 컴포넌트 (재료 정보 화면 전용). */
+// item = 보여줄 재료 한 개의 정보(부모 화면이 props로 넘겨준다).
 export default function ItemDetail({ item }: { item: Item }) {
-  const tip = item.storage_tip?.trim();
-  const hasTip = !!tip;
-  const dday = item.expire_date ? getDday(item.expire_date) : null;
+  const tip = item.storage_tip?.trim(); // 보관 팁 글(앞뒤 공백 제거)
+  const hasTip = !!tip; // 보관 팁이 있는지. 없으면 안내 박스·팁 섹션을 통째로 숨긴다
+  const dday = item.expire_date ? getDday(item.expire_date) : null; // 남은 일수. 유통기한 없으면 null(소비기한 줄 숨김)
 
   // 줄바꿈이 있으면 불릿 리스트, 없으면 한 단락.
-  const tipLines = hasTip ? tip.split('\n').map((l) => l.trim()).filter(Boolean) : [];
-  const asBullets = (tip?.includes('\n') ?? false) && tipLines.length > 1;
+  const tipLines = hasTip ? tip.split('\n').map((l) => l.trim()).filter(Boolean) : []; // 팁을 줄 단위로 나눈 것
+  const asBullets = (tip?.includes('\n') ?? false) && tipLines.length > 1; // 여러 줄이면 점(•) 목록으로 보여줄지 여부
 
   return (
     <View>
@@ -73,58 +77,59 @@ export default function ItemDetail({ item }: { item: Item }) {
   );
 }
 
+// 아래는 각 부분의 모양·배치를 정하는 스타일 모음. 위 JSX의 style={styles.이름}과 연결된다.
 const styles = StyleSheet.create({
-  image: {
+  image: { // 맨 위 큰 이미지 자리(지금은 단색, 사진 기능 전까지 placeholder)
     width: '100%',
     height: IMAGE_HEIGHT,
     backgroundColor: colors.thumbnail,
   },
-  content: {
+  content: { // 이미지 아래 글자 영역 전체의 안쪽 여백과 요소 간격
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
-  nameRow: {
+  nameRow: { // 이름(왼쪽)과 보관방식(오른쪽)을 양끝으로 둔 줄
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  name: { ...typography.heading1, color: colors.textPrimary, flexShrink: 1 },
-  storage: { ...typography.body, color: colors.textSecondary },
-  expiryRow: {
+  name: { ...typography.heading1, color: colors.textPrimary, flexShrink: 1 }, // 재료 이름(가장 큰 제목 글자)
+  storage: { ...typography.body, color: colors.textSecondary }, // 이름 오른쪽 보관방식 글자(냉장/냉동/실온)
+  expiryRow: { // 소비기한 문구(왼쪽)와 상태점(오른쪽)을 양끝으로 둔 줄
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  expiryText: { ...typography.body, color: colors.textSecondary, flexShrink: 1 },
-  expiryDate: { color: colors.textPrimary, fontWeight: typography.heading2.fontWeight },
-  statusDot: {
+  expiryText: { ...typography.body, color: colors.textSecondary, flexShrink: 1 }, // '권장 소비기한 … 까지' 문구
+  expiryDate: { color: colors.textPrimary, fontWeight: typography.heading2.fontWeight }, // 그 문구 안 날짜 부분만 진하게 강조
+  statusDot: { // 소비기한 줄 오른쪽 임박도 색점
     width: STATUS_DOT_SIZE,
     height: STATUS_DOT_SIZE,
     borderRadius: STATUS_DOT_SIZE / 2,
   },
-  noticeBox: {
+  noticeBox: { // '참고용이에요' 안내 박스(테두리만 있는 박스)
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     borderRadius: radius.card,
     padding: spacing.md,
   },
-  noticeText: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
-  divider: {
+  noticeText: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 }, // 안내 박스 안 글자
+  divider: { // 안내 박스와 보관 팁 섹션을 나누는 얇은 가로 구분선
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
   },
-  tipTitle: { ...typography.heading2, color: colors.textPrimary },
-  tipBox: {
+  tipTitle: { ...typography.heading2, color: colors.textPrimary }, // 보관 팁 섹션 소제목(예: '냉장 보관')
+  tipBox: { // 보관 팁 내용을 담는 회색 박스
     backgroundColor: colors.surface,
     borderRadius: radius.card,
     padding: spacing.md,
     gap: spacing.sm,
   },
-  bulletRow: { flexDirection: 'row', gap: spacing.sm },
-  bullet: { ...typography.body, color: colors.textPrimary },
-  bulletText: { ...typography.body, color: colors.textPrimary, flex: 1, lineHeight: 21 },
+  bulletRow: { flexDirection: 'row', gap: spacing.sm }, // 팁이 여러 줄일 때 점(•) 한 줄(점 + 글)을 가로로 배치
+  bullet: { ...typography.body, color: colors.textPrimary }, // 줄 앞의 점(•) 기호
+  bulletText: { ...typography.body, color: colors.textPrimary, flex: 1, lineHeight: 21 }, // 팁 글자(한 단락 또는 점 목록의 한 줄)
 });
