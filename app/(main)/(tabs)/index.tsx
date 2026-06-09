@@ -129,7 +129,7 @@ export default function FridgeScreen() {
           <NotificationBell />
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => router.push('/(main)/register/category' as never)}
+            onPress={() => router.push('/(main)/register/ingredient' as never)}
           >
             <Text style={styles.addButtonText}>＋ 추가</Text>
           </TouchableOpacity>
