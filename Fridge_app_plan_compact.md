@@ -1,7 +1,7 @@
 # NangBu 냉장고 앱 — 개발 지침서 (압축판)
 
 > Claude Code용. 이 파일을 기준으로 개발 지시.
-> **기준일: 2026-06-09 (UX/UI 적용 1차 / 라우팅 재편(Stack+탭 분리) / 냉장고 필터·정렬 / 등록 화면 통합)**
+> **기준일: 2026-06-14 (UX/UI 3차: 냉장고 행·친구 카드 통일 + 등록 화면 Figma+휠 피커 + 레시피 목록/작성 Figma·토큰화 / 2차: 토큰 정비 + 탭바 활성표시 + 커뮤니티 화면 Figma 적용 / 1차: 라우팅 재편·냉장고 필터·정렬·등록 통합)**
 
 ---
 
@@ -28,7 +28,9 @@
 | ✅ | **라우팅 재편(§16)** — `(main)/_layout.tsx`=Stack, 탭은 `(main)/(tabs)/_layout.tsx`로 분리. 상세 화면이 탭 위로 push되어 iOS 스와이프 뒤로가기 동작 |
 | ✅ | **냉장고 화면 개편(§17)** — 보관방식 필터 탭(전체/냉장/냉동/실온) + 정렬 바텀시트(기본/이름/유통기한순) + `FridgeItemRow`(썸네일·D-day·상태점) |
 | ✅ | **등록 화면 통합(§18)** — `register/ingredient.tsx`가 카테고리 사이드바 + 재료 그리드 + 이름 검색을 한 화면으로 통합. `register/category.tsx`는 미사용(고아) |
-| 🟡 | **UX/UI 디자인 적용** — 1차 토큰화·화면 레이아웃 적용 완료. 남은 일: ⚠️ 추정 토큰값(텍스트/보더/틴트/타이포)을 디자이너 확정값으로 교체, 썸네일 실제 이미지 |
+| ✅ | **디자인 2차(§19)** — `theme.ts colors` 재정비(textTertiary·borderStrong 신규 / surface #F2F2F7 교정 / accent·disabled 삭제 / `as const`), `CustomTabBar` 활성표시=흰 알약 박스, `friends/index` 커뮤니티 화면 Figma 적용(카드 그리드 + 친구추가 모달) |
+| ✅ | **디자인 3차(§20)** — 냉장고 행(`FridgeItemRow`) 시안 교체(썸네일 50·색점 인라인·`›` 셰브론) + 친구 냉장고가 동일 행 재사용 / 등록 폼을 `ItemForm`에서 분리한 **`RegisterItemForm`** 전용 폼으로 Figma 적용(필 칩·배지·고정 CTA) + **유통기한 휠 피커(`DateWheelPicker`)** + 보관방식 변경 시 유통기한 재계산 버그 수정 / 레시피 목록·작성 화면 Figma 적용+토큰화 |
+| 🟡 | **UX/UI 디자인 적용** — 토큰화·주요 화면 레이아웃 적용 진행 중. 남은 일: ⚠️ 추정 토큰값(텍스트/보더/틴트/타이포)·시안 고정값(라운드/그림자/폰트크기) 디자이너 확정값으로 교체, 나머지 화면(item·fridge·mypage 등) Figma 적용, 썸네일 실제 이미지, mypage 등 raw 숫자 화면 토큰화 |
 | 보류 | 푸시 알림(Expo Notifications), 사용자 정의 카테고리, 식재료 사진(현재 단색 placeholder) |
 
 ---
@@ -86,7 +88,7 @@
 | `app/index.tsx` | 세션 유무에 따라 `(main)`/`(auth)/login`으로 `Redirect`만 함. UI는 로딩 스피너뿐. `console.log` 잔존 |
 | `app/(auth)/_layout.tsx` | 인증 그룹 Stack |
 | `app/(main)/_layout.tsx` | **Stack**(탭 아님). `(tabs)`를 첫 화면으로, 상세 화면(item/fridge/register/friends/recipes/notifications/mypage)을 그 위로 push. `gestureEnabled:true`로 스와이프 뒤로가기 |
-| `app/(main)/(tabs)/_layout.tsx` | **하단 탭바 정의**(4탭). 탭=냉장고/커뮤니티/레시피/마이페이지. **탭 아이콘·활성색(`colors.primary`)·비활성색(`colors.textSecondary`)이 여기 있음** |
+| `app/(main)/(tabs)/_layout.tsx` | **하단 탭바 정의**(4탭). 탭=냉장고/커뮤니티/레시피/마이페이지. 실제 탭바 그리기는 `components/CustomTabBar.tsx`(§19). **활성 탭=아이콘을 흰 알약 박스로 감싸고 아이콘만 `primary`로 반전 / 비활성=흰 아이콘·흰 라벨** |
 
 ### 5-2. 인증 화면
 
@@ -102,8 +104,8 @@
 | 탭 | 파일 | 화면 내용 |
 |----|------|-----------|
 | 🧊 냉장고 | `app/(main)/(tabs)/index.tsx` | **첫 화면=나의 냉장고 목록**(FlatList). 로고("냉부")+종+`＋추가` 헤더 → **보관방식 필터 탭(전체/냉장/냉동/실온)** → **개수 + 정렬 버튼(`SortSheet`)** → `FridgeItemRow` 목록(§17). 행 탭→`item/[id]`, 길게눌러 삭제, 빈 상태(필터별 문구 분기) |
-| 👥 커뮤니티 | `app/(main)/(tabs)/friends/index.tsx` | 친구 목록 + username으로 친구 요청 + **받은 요청 수락/거절**(상단 섹션) + 길게눌러 삭제. 행 탭→`friends/[friendId]` |
-| 🍳 레시피 | `app/(main)/(tabs)/recipes/index.tsx` | 내 레시피 목록. 헤더에 종+`＋추가`. 행 탭→`recipes/[recipeId]` |
+| 👥 커뮤니티 | `app/(main)/(tabs)/friends/index.tsx` | **Figma 적용(§19)**: 헤더(좌 `Logo` / 우 종+친구추가 아이콘) + "커뮤니티" 제목 + **친구=흰 카드 2열 그리드**(제목=이름·아래=@아이디, 멤버수 미표시). 친구추가=헤더 아이콘→**모달**(검색입력+"추가하기"). **받은 요청 수락/거절**(그리드 위 섹션)·빈/로딩/에러 유지. 카드 탭→`friends/[friendId]`, 길게눌러 삭제 |
+| 🍳 레시피 | `app/(main)/(tabs)/recipes/index.tsx` | **Figma 적용·토큰화(§20)**: 헤더(좌 `냉부` 로고·`thumbnail` 색 / 우 종+`＋추가`) + 가운데 "나의 레시피" 제목 + **레시피=흰 카드**(제목+`body` 2줄 미리보기; 부제·재료 필드 없어 body로 매핑). 배경=`surface`, 카드=`background`+그림자. 카드 탭→`recipes/[recipeId]`. source 뱃지 미표시(시안·코드 모두 없음) |
 | 👤 마이페이지 | `app/(main)/(tabs)/mypage/index.tsx` | 프로필 요약 + **냉장고 공개 토글** + 메뉴 4개(프로필수정/알림설정/기본소비기한/공지) + 로그아웃 |
 
 > 마이페이지 하위 화면(`mypage/profile`, `notification-settings`, `expiry/*`, `notice`)과 알림(`notifications`)은 탭이 아닌 **`(main)` Stack 직속**이라 `(tabs)` 밖에 있다(§5-8·5-9). 탭 화면에서 `router.push`로 진입.
@@ -115,7 +117,7 @@
 | 단계 | 파일 | 내용 |
 |------|------|------|
 | ① 카테고리+재료 | `app/(main)/register/ingredient.tsx` | **좌 카테고리 사이드바 + 우 재료 그리드(3열 썸네일)** 한 화면. 상단 이름 **검색**(디바운스, 전체 마스터 대상). 재료 탭→③. **`+ 직접 입력`**으로 ③ 바이패스 가능 |
-| ② 등록 폼 | `app/(main)/register/new.tsx` | `ItemForm`(create). 표준 재료로 왔으면 이름·보관팁 프리필 + 권장 보관방식 기본선택 + 비권장 칩 비활성. 유통기한 자동채움(`resolveExpiry`). `items.ingredient_id` 저장 |
+| ② 등록 폼 | `app/(main)/register/new.tsx` | **`RegisterItemForm`(create 전용, §20)** — `ItemForm` 공유를 끊고 분리. Figma 하이브리드(이름=대형 인라인 입력·필 칩·초록 요약 배지·고정 CTA "확인"). 표준 재료로 왔으면 이름·보관팁 프리필 + 권장 보관방식 기본선택 + 비권장 칩 비활성. **유통기한=우상단 배지 탭→`DateWheelPicker`(년/월/일 휠)**, 자동채움(`resolveExpiry`) + 보관방식 변경 시 재계산(단 휠로 직접 고른 값은 보존). `items.ingredient_id` 저장. 섹션 순서: 카테고리→보관방식→수량→보관법 |
 | (미사용) | `app/(main)/register/category.tsx` | **고아 파일** — §18 통합 후 어디서도 `push`하지 않음. 정리 대상(§10) |
 
 ### 5-5. 식재료 상세·편집 (`item/`, `fridge/`)
@@ -129,13 +131,13 @@
 
 | 화면 | 파일 | 내용 |
 |------|------|------|
-| 친구 냉장고(readonly) | `app/(main)/friends/[friendId].tsx` | 친구 프로필 + 품목 목록. 비공개면 🔒 안내. 행 탭→`item/[id]`(코멘트 작성) |
+| 친구 냉장고(readonly) | `app/(main)/friends/[friendId].tsx` | 친구 프로필 + 품목 목록. **메인 냉장고와 동일한 `FridgeItemRow` 재사용(§20)**(인라인 행 제거). 비공개면 🔒 안내. 행 탭→`item/[id]`(코멘트 작성·삭제 longPress 없음) |
 
 ### 5-7. 레시피 상세·추가 (`recipes/`)
 
 | 화면 | 파일 | 내용 |
 |------|------|------|
-| 레시피 추가 | `app/(main)/recipes/new.tsx` | 모드 분기 화면. `choose`(직접작성/AI추천 선택) → `manual`(폼) / `ai`(냉장고 재료 선택→추천→미리보기→저장) |
+| 레시피 추가 | `app/(main)/recipes/new.tsx` | 모드 분기 화면. **Figma 적용(§20)**: `choose`=가운데 제목 + 흰 카드 2장(직접작성/AI추천, 그림자) → `manual`=고정 헤더(뒤로)+이름·조리법 입력(초록 2px 테두리)+하단 고정 CTA "추가하기" / `ai`(냉장고 재료 선택→추천→미리보기→저장, **본문·로직 불변**) |
 | 레시피 상세 | `app/(main)/recipes/[recipeId].tsx` | 보기 + 인라인 편집(제목/본문) + 삭제 |
 
 ### 5-8. 알림 (`notifications`)
@@ -158,11 +160,17 @@
 
 ```
 components/
-  ItemForm.tsx        # 등록·편집 공용 폼(create|edit|readonly). §6 참고
+  ItemForm.tsx        # 편집 공용 폼(create|edit|readonly 지원). **현재 fridge/[itemId](edit)에서만 사용** — 등록(create)은 §20에서 RegisterItemForm으로 분리됨. §6 참고
+  RegisterItemForm.tsx# ★등록(create) 전용 폼(§20). Figma 하이브리드 — 대형 이름 입력·필 칩·초록 요약 배지·고정 CTA. 입력 필드/로직은 ItemForm create와 동치
+  DateWheelPicker.tsx # ★유통기한 휠 피커 바텀시트(§20). 년/월/일 3컬럼, RN ScrollView snapToInterval+가운데 강조 밴드+페이드(새 패키지 없음). 'YYYY-MM-DD' 반환
   ItemDetail.tsx      # 재료 정보 읽기 전용 표시(이미지 placeholder·D-day 상태점·보관팁·안내문구)
-  FridgeItemRow.tsx   # ★냉장고 목록 한 행(원형 썸네일·이름·D-day·소비기한·보관방식·상태점). §17
+  FridgeItemRow.tsx   # ★냉장고 목록 한 행(§17·§20). 원형 썸네일(50)·이름·D-day(bold)·임박 색점(이름 옆 인라인)·"날짜까지-보관"·우측 `›` 셰브론. 냉장고/친구 냉장고 공용
   SortSheet.tsx       # ★하단 정렬 바텀시트(기본/이름/유통기한순). SortKey·SORT_LABELS export. §17
-  CommentList.tsx     # 코멘트 목록 렌더
+  CustomTabBar.tsx    # ★하단 탭바 실제 렌더(§19). 활성=흰 알약 박스+초록 아이콘 / 비활성=흰 아이콘·라벨
+  AddButton.tsx       # 헤더 '＋추가' 버튼(냉장고·레시피)
+  CommentCardList.tsx # ★코멘트 카드형 목록(CommentCard 사용, loading/error/빈 처리). item/fridge 상세에서 사용
+  CommentCard.tsx     # 코멘트 1장 흰 카드(이름·내용·삭제버튼)
+  CommentList.tsx     # 구 코멘트 목록(인라인 회색). 현재 미사용(고아) — §10 정리 대상
   NotificationBell.tsx# 헤더 우측 종+빨간점. 색은 theme 토큰 참조, 누르면 알림 화면
 contexts/AuthContext.tsx   # 세션·user 전역 상태 + signIn/signUp/signOut (useAuth). console.log 잔존
 hooks/use-color-scheme.ts(.web.ts)  # 라이트/다크 감지(현재 거의 미사용)
@@ -175,7 +183,7 @@ constants/  categories.ts(21개 단일 출처) · theme.ts(★디자인 토큰: 
 supabase_schema.sql
 ```
 
-**UX/UI 작업 시 진입점:** 색·간격·라운드·타이포는 전부 `constants/theme.ts` 토큰을 거친다(현재 일부 ⚠️ 추정값). `colors`에는 브랜드(primary/accent/thumbnail) + 배경/면 + 텍스트 + 선/비활성 + 상태(danger/warning) + **틴트 세트(primaryTint/dangerTint/warningTint + 각 border)** + overlay가 있다. 화면별 레이아웃/스타일은 각 화면 파일 하단의 `StyleSheet.create`에 있다(친구/레시피/마이페이지 등 일부 화면은 spacing/typography 토큰 대신 아직 raw 숫자·fontSize가 섞여 있어 토큰화 여지 있음).
+**UX/UI 작업 시 진입점:** 색·간격·라운드·타이포는 전부 `constants/theme.ts` 토큰을 거친다(현재 일부 ⚠️ 추정값). `colors`(§19 재정비, `as const`)에는 브랜드(primary/primaryTint/primaryTintBorder/thumbnail) + 텍스트(textPrimary/textSecondary/**textTertiary**#AEAEB2/textDisabled) + 경계선·면(border/**borderStrong**#D1D1D6/surface#F2F2F7/background) + 상태(danger/dangerTint·Border, warning/warningTint·Border) + overlay가 있다. ~~accent·disabled~~는 §19에서 삭제됨. 화면별 레이아웃/스타일은 각 화면 파일 하단의 `StyleSheet.create`에 있다(**mypage 등 일부 화면은 아직 raw 숫자·fontSize가 섞여 토큰화 여지 있음**; index/notifications/item/ingredient/friends는 토큰화됨).
 
 **핵심 흐름 (요약):**
 - 진입: 로그인 → 나의 냉장고 목록(`(main)/(tabs)/index`)
@@ -194,6 +202,7 @@ supabase_schema.sql
 - 입력 항목: 이름, 카테고리, 보관방식(냉장/냉동/실온), 보관팁, 유통기한, 수량
 - `resolveExpiry` prop: `(category, storage) => Promise<number|null>` — 유통기한 빈칸일 때만 자동채움
 - `ingredientDays` prop: `Record<StorageType, number> | null` — 표준 재료 선택 시 일수가 0인 보관방식 칩 비활성(`(비권장)` 표시). null/미지정이면 모든 방식 활성(직접 입력)
+- ⚠️ **§20 이후 `create`(등록)는 `RegisterItemForm`으로 분리**됨 → `register/new`는 ItemForm을 쓰지 않는다. ItemForm은 현재 `fridge/[itemId]`(edit)에서만 사용. RegisterItemForm은 위 prop(`resolveExpiry`/`ingredientDays`)·검증·자동채움 로직을 동일하게 유지하므로 등록 로직 변경 시 **두 곳을 함께** 확인할 것
 
 ---
 
@@ -298,6 +307,27 @@ supabase_schema.sql
 
 ---
 
+## 8-6. §19 디자인 2차 — 토큰 정비 · 탭바 · 커뮤니티 Figma 적용 (구현 완료)
+
+theme 토큰을 재정비하고, 탭바·커뮤니티 화면을 Figma 시안대로 교체.
+
+- **`theme.ts colors` 재정비**:
+  - 신규: `textTertiary(#AEAEB2)`(textSecondary보다 약한 텍스트), `borderStrong(#D1D1D6)`(진한 경계선) — 아직 미사용, 정의만.
+  - 교정: `surface` `#F2F2F2 → #F2F2F7`(오타 교정 + 구 시안 `#F4F6F4` 흡수).
+  - 삭제: `accent`·`disabled`(전 코드 참조 0건 확인 후 제거).
+  - `as const` 부여(리터럴 타입). 사용 중 토큰(primary/primaryTint(+Border)/danger계열/warning계열/overlay/thumbnail 등)은 값 그대로 유지 → 참조 안 깨짐(tsc 통과).
+  - ⚠️ 시안 고정값·추정 토큰은 `memory/figma-token-reconcile`에서 추적.
+- **`components/CustomTabBar.tsx` 활성표시 변경**: 활성 탭 = 아이콘을 **흰 알약 박스**(`background` 채움, radius)로 감싸고 아이콘만 `colors.primary`(초록)로 반전 / 비활성 = 박스 투명·흰 아이콘·흰 라벨. 활성/비활성 동일 패딩으로 1px 밀림 방지. (기존 "활성 흰색·비활성 회색"에서 변경.)
+- **커뮤니티 `friends/index.tsx` Figma 적용**(node 1:534=화면, 1:671=친구추가 모달):
+  - 헤더: 좌 `Logo`(`thumbnail` 색) / 우 `NotificationBell` + 친구추가 아이콘(`person-add-outline`). 제목 "친구" → **"커뮤니티"**.
+  - 본문: **친구 1명 = 흰 카드, 2열 그리드**(제목=`display_name`, 아래=`@username`, **멤버수 미표시**). 배경=`surface`, 카드=`background`+그림자.
+  - 친구추가: 헤더 아이콘 → **모달**(스크림=`overlay` + 돋보기 입력 + "추가하기" 알약; 입력 있으면 `primary`, 없으면 `border` 회색 비활성). 표시용 state `addModalVisible` 추가, `handleAdd` 로직은 유지.
+  - 데이터 호출(`fetchFriends`/`fetchPendingRequests`)·수락/거절/삭제 핸들러·기존 state·네비 **전부 유지**. 디자인 외 요소(받은 요청 섹션=그리드 위·경고색→중립 카드 톤 / 빈·로딩·에러)는 **삭제 없이 새 톤으로 유지**.
+  - 시안 고정값(카드 높이 105·내부 gap 10·제목/Logo 폰트 16·20·그림자)은 `⚠️` 주석 상수로 표기.
+- **코멘트 컴포넌트 관계 정리**: 상세 화면(item/fridge)이 `CommentCardList`(카드형, `CommentCard` 사용)를 쓴다. 구 `CommentList`(인라인 회색 목록)는 **현재 미사용(고아)** → §10 정리 대상.
+
+---
+
 ## 9. 주요 트러블슈팅 요약
 
 | 이슈 | 해결 |
@@ -325,5 +355,21 @@ supabase_schema.sql
 - ~~`constants/theme.ts` 삭제~~ → **무효.** theme.ts는 삭제 대신 **디자인 토큰 정식 도입처**가 됨(colors/radius/spacing/typography/button). `NotificationBell`의 임시 상수도 토큰 참조로 전환 완료. 남은 일은 ⚠️ 추정값을 디자이너 확정값으로 교체하는 것
 - `console.log` 제거 — **아직 남아 있음**: `app/_layout.tsx`, `app/index.tsx`, `contexts/AuthContext.tsx` 3곳
 - `app/(main)/register/category.tsx` — §18 통합 후 **미사용(고아) 파일.** 삭제 검토(현재 어디서도 push 안 함)
+- `components/CommentList.tsx` — §19 이후 **미사용(고아).** `CommentCardList`(카드형)가 대체. 삭제 검토
 - ~~알림 클릭 이동 경로: `fridge/[id]` → `item/[id]` 변경 검토~~ → **완료.** `notifications.tsx`가 코멘트 알림은 `item/[id]`, 친구수락 알림은 `friends/[actor_id]`로 이동
 - `hooks/use-color-scheme` : 다크모드 미사용이면 정리 검토(아직 남음)
+
+---
+
+## 8-7. §20 디자인 3차 — 냉장고 행·친구 카드 통일 · 등록 폼 분리+휠 피커 · 레시피 화면 Figma (구현 완료)
+
+추가 화면들을 Figma 시안대로 교체하고, 등록 흐름을 전용 폼으로 분리했다.
+
+- **냉장고 행 `FridgeItemRow` 시안 교체**: 원형 썸네일 44→**50**, 상태 색점 8→**10**, 색점을 우측 끝에서 **이름·D-day 옆 인라인**으로 이동, 우측 끝에 **`›` 셰브론**(`Ionicons chevron-forward`, 상세 이동 어포던스) 추가, 아랫줄 메타를 `"날짜 까지 · 보관"` → **`"날짜까지-보관"`**, D-day 라벨 **bold**. 메인 냉장고(`(tabs)/index`)의 카운트 문구도 `"N개의 재료"` → **`"N가지 재료"`**, 정렬 버튼 `"기본순 ▾"` → **`"기본순"`**(회색), 로고 색을 **다크 그린**(`thumbnail`)으로.
+- **친구 냉장고가 동일 행 재사용**: `friends/[friendId].tsx`의 인라인 `ItemRow`(카테고리·수량·만료/임박 텍스트)를 제거하고 **`FridgeItemRow`를 import**해 메인과 시각 통일. 데이터 호출(`fetchFriendItems`·`fridge_public`), 헤더(친구명/@아이디), 카드 탭→`item/[id]`(코멘트 흐름), 빈/비공개 문구는 **전부 보존**. 삭제 longPress는 전달 안 함(남의 냉장고). 카테고리·수량 노출은 행 통일로 사라짐(의도).
+- **등록 폼 분리 `RegisterItemForm`**: `register/new`가 공유 `ItemForm` 대신 전용 폼 사용(create만 새 디자인, edit/readonly 무영향). Figma 하이브리드 = 시안 비주얼(필 칩·초록 요약 배지·구분선·고정 CTA "확인") + **편집 입력 필드 전부 유지**(이름=보더리스 대형 입력, 보관법·유통기한 포함)로 §7-10 직접입력 바이패스 등 로직 7종 보존. 보관방식 칩 선택색은 시안대로 **진회색(`textSecondary`)/흰 글씨**(앱 기본 그린 선택과 다름 — reconcile 대상).
+- **유통기한 휠 피커 `DateWheelPicker`**: 텍스트 입력 → **년/월/일 휠 바텀시트**로 교체. 우상단 **요약 배지 탭**으로 열림(보관방식은 칩에서, 휠은 **날짜만** 수정). 빈값이면 휠 초기값=오늘, **확인 시에만** 기록(미설정이면 빈값 유지→insert null). 새 패키지 없이 RN `ScrollView snapToInterval` + `Animated` opacity 페이드 + 가운데 강조 밴드로 구현. 저장 포맷 `YYYY-MM-DD` 유지.
+- **유통기한 재계산 버그 수정 + 섹션 순서**: 보관방식 변경 시 유통기한이 갱신 안 되던 버그(자동채움이 `expire_date` 있으면 건너뛰던 가드가 원인) 수정 — 가드 제거 후 **`manualExpiry` 플래그**로 게이트(자동채움값은 보관방식 변경 시 재계산, 휠로 직접 고른 값은 보존). 폼 섹션 순서 **수량↔보관방식 교체** → 카테고리→보관방식→수량→보관법.
+- **레시피 목록 `recipes/index` Figma+토큰화**: 헤더(좌 `냉부` 로고 / 우 종+`＋추가`) + 가운데 "나의 레시피" + **흰 카드 리스트**(제목 + `body` 2줄; `Recipe`에 부제·재료 필드가 없어 body로 매핑, 허위 "재료:" 라벨 미생성). 화면 배경=`surface`, 카드=`background`+다크그린 그림자. fetch·네비·빈/로딩/에러 보존, source 뱃지 미표시.
+- **레시피 작성 `recipes/new` Figma**: `choose`=가운데 제목 + 흰 카드 2장(직접작성=`create-outline`/AI추천=`robot-outline` 아이콘, 그림자). `manual`=고정 헤더(뒤로 화살표 + "직접 추가") + 이름·조리법 입력(초록 2px 테두리) + 하단 고정 CTA "추가하기"(pill). **AI 추천 본문(재료선택·추천·미리보기)·로직·전용 스타일은 불변** — manual CTA는 별도 `cta` 스타일을 신설해 AI 버튼 공유 스타일 미변경. 모드 분기·저장(`createRecipe` manual/ai)·검증·네비·뒤로가기 보존.
+- **CTA radius 정합**: 등록·레시피작성 CTA를 Figma `rounded-100`=`button.radius`(=`radius.pill`)로 통일(기존 9999/16/8 혼재 해소). ⚠️ **입력박스 radius 12는 토큰 부재** → 최근접 `radius.card(16)` 사용 + reconcile 시 `radius.md=12` 신설 검토. 타이포 일부 크기(16·18·14 등) 정확 토큰 부재 → 최근접 사용, `memory/figma-token-reconcile` 추적.

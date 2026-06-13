@@ -23,6 +23,9 @@ const BOTTOM_PAD = 21;  // ⚠️ 토큰 없음 — 막대 하단 여백(Figma p
 const ON_PRIMARY = '#FFFFFF';     // ⚠️ 토큰 없음 — 녹색 배경 위 흰색 글자/아이콘. theme.ts에 onPrimary 토큰 추가 권장
 const LABEL_FONT_SIZE = 11;       // ⚠️ 토큰 없음 — typography.caption은 13px. Figma 라벨은 11px
 const LABEL_LINE_HEIGHT = 16;     // ⚠️ 토큰 없음 — Figma 줄높이 16px
+const ACTIVE_PILL_RADIUS = 10;    // ⚠️ 토큰 없음 — 활성 탭 흰색 박스(알약) 모서리
+const ACTIVE_PILL_PAD_H = 16;     // ⚠️ 토큰 없음 — 활성 박스 좌우 안쪽 여백(가로로 넓은 알약)
+const ACTIVE_PILL_PAD_V = 4;      // ⚠️ 토큰 없음 — 활성 박스 상하 안쪽 여백
 // 폰트: Figma는 Pretendard. 프로젝트에 폰트 로딩이 없어 굵기(Bold/Regular)만 시스템 폰트로 반영. ⚠️
 
 // 각 탭의 아이콘 매핑. route.name(파일 경로 기준)으로 찾는다.
@@ -79,8 +82,10 @@ export default function CustomTabBar({ state, descriptors, navigation }: Props) 
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
           >
-            {/* 아이콘 — 활성=흰색, 비활성=회색(textSecondary) */}
-            <MaterialCommunityIcons name={iconName} size={ICON_SIZE} color={isFocused ? ON_PRIMARY : colors.textSecondary} />
+            {/* 아이콘 묶음 — 활성일 때만 흰색 박스(알약)로 감싸고 아이콘은 초록으로 반전 */}
+            <View style={[styles.iconWrap, isFocused && styles.iconWrapActive]}>
+              <MaterialCommunityIcons name={iconName} size={ICON_SIZE} color={isFocused ? colors.primary : ON_PRIMARY} />
+            </View>
             {/* 라벨 — 활성일 때만 Bold, 그 외 Regular (Figma의 유일한 활성 구분) */}
             <Text style={[styles.label, isFocused ? styles.labelActive : styles.labelInactive]} numberOfLines={1}>
               {label}
@@ -109,7 +114,18 @@ const styles = StyleSheet.create({
     height: ITEM_HEIGHT,                // 64 — 시안 고정 치수
     paddingVertical: spacing.sm,        // 8 — spacing.sm
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,                    // 4 — spacing.xs
+  },
+  iconWrap: {
+    // 아이콘 박스 — 비활성은 투명(흰 아이콘만 보임). 활성/비활성 같은 패딩으로 깔아 밀림 방지
+    paddingHorizontal: ACTIVE_PILL_PAD_H,
+    paddingVertical: ACTIVE_PILL_PAD_V,
+    borderRadius: ACTIVE_PILL_RADIUS,
+  },
+  iconWrapActive: {
+    // 활성 탭 — 흰색 채움 박스(알약). 아이콘은 초록으로 반전됨
+    backgroundColor: ON_PRIMARY,
   },
   label: {
     // 탭 라벨 공통 — 흰색, 11px/16px, 가운데 정렬 (⚠️ 크기·줄높이 토큰 없음)
@@ -123,8 +139,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   labelInactive: {
-    // 비활성 탭 라벨 — Regular + 회색(흰색 대신 textSecondary로 덮어씀)
+    // 비활성 탭 라벨 — Regular + 흰색(라인 박스로 구분하므로 회색 대신 흰색 유지)
     fontWeight: '400',
-    color: colors.textSecondary,
   },
 });

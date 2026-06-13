@@ -163,9 +163,9 @@ export default function FridgeScreen() {
 
       {/* 3. 개수 + 정렬 */}
       <View style={styles.countRow}>
-        <Text style={styles.countText}>{visibleItems.length}개의 재료</Text>
+        <Text style={styles.countText}>{visibleItems.length}가지 재료</Text>
         <TouchableOpacity style={styles.sortButton} onPress={() => setSortVisible(true)}>
-          <Text style={styles.sortText}>{SORT_LABELS[sort]} ▾</Text>
+          <Text style={styles.sortText}>{SORT_LABELS[sort]}</Text>
         </TouchableOpacity>
       </View>
 
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.md,
   },
-  logo: { ...typography.heading1, color: colors.textPrimary }, // 헤더 왼쪽 '냉부' 로고 글자
+  logo: { ...typography.heading1, color: colors.thumbnail }, // 헤더 왼쪽 '냉부' 로고 글자(다크 그린)
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md }, // 헤더 오른쪽 묶음(알림 종 + 추가 버튼)을 가로로 나란히
 
   // 필터 탭
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   },
   countText: { ...typography.caption, color: colors.textSecondary }, // 'N개의 재료' 글자
   sortButton: { paddingVertical: spacing.xs, paddingHorizontal: spacing.xs }, // 정렬 버튼의 터치 영역
-  sortText: { ...typography.caption, color: colors.textPrimary }, // 정렬 버튼 글자(예: '기본순 ▾')
+  sortText: { ...typography.caption, color: colors.textSecondary }, // 정렬 버튼 글자(예: '기본순')
 
   // 목록
   list: { paddingBottom: spacing.xl }, // 재료 목록이 있을 때 아래쪽 여백

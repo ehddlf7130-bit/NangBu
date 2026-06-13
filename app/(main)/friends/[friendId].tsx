@@ -1,8 +1,9 @@
 import { colors } from '@/constants/theme';
+import FridgeItemRow from '@/components/FridgeItemRow';
 import { fetchFriendItems, fetchFriendProfile } from '@/lib/friends';
 import { extractErrorMessage } from '@/lib/items';
 import type { Profile } from '@/types/friend';
-import { STORAGE_LABELS, type Item } from '@/types/item';
+import type { Item } from '@/types/item';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -80,34 +81,11 @@ export default function FriendFridgeScreen() {
           contentContainerStyle={items.length === 0 ? styles.emptyContainer : styles.list}
           ListEmptyComponent={<EmptyState />}
           renderItem={({ item }) => (
-            <ItemRow item={item} onPress={() => router.push(`/(main)/item/${item.id}` as never)} />
+            <FridgeItemRow item={item} onPress={() => router.push(`/(main)/item/${item.id}` as never)} />
           )}
         />
       )}
     </View>
-  );
-}
-
-function ItemRow({ item, onPress }: { item: Item; onPress: () => void }) {
-  const isExpired = item.expire_date ? new Date(item.expire_date) < new Date() : false;
-  const isSoon = !isExpired && item.expire_date
-    ? (new Date(item.expire_date).getTime() - Date.now()) < 3 * 24 * 60 * 60 * 1000
-    : false;
-
-  return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
-      <View style={styles.rowMain}>
-        <Text style={styles.rowName}>{item.name}</Text>
-        <Text style={styles.rowMeta}>
-          {item.category}  ·  {STORAGE_LABELS[item.storage]}  ·  {item.quantity}개
-        </Text>
-      </View>
-      {item.expire_date && (
-        <Text style={[styles.expireText, isExpired && styles.expired, isSoon && styles.soon]}>
-          {isExpired ? '만료' : isSoon ? '임박' : item.expire_date}
-        </Text>
-      )}
-    </TouchableOpacity>
   );
 }
 
@@ -138,24 +116,8 @@ const styles = StyleSheet.create({
   backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
   title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
   subtitle: { fontSize: 13, color: colors.textSecondary },
-  list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
+  list: { paddingBottom: 32 },
   emptyContainer: { flex: 1 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  rowMain: { gap: 4, flex: 1 },
-  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  rowMeta: { fontSize: 13, color: colors.textSecondary },
-  expireText: { fontSize: 13, color: colors.textSecondary, marginLeft: 8 },
-  expired: { color: colors.danger, fontWeight: '600' },
-  soon: { color: colors.warning, fontWeight: '600' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },

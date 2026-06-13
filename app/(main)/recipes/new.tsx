@@ -1,9 +1,10 @@
-import { colors, radius } from '@/constants/theme';
+import { button, colors, radius, spacing, typography } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractErrorMessage, fetchMyItems } from '@/lib/items';
 import { createRecipe, requestAiRecipe } from '@/lib/recipes';
 import type { Item } from '@/types/item';
 import type { AiRecipeResult } from '@/types/recipe';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -17,28 +18,49 @@ import {
   View,
 } from 'react-native';
 
+// 시안 고정 치수(테마 토큰이 아닌 레이아웃 스펙).
+const INPUT_HEIGHT = 48;     // 한 줄 입력 높이
+const TEXTAREA_HEIGHT = 150; // 조리법 멀티라인 높이
+
 type Mode = 'choose' | 'manual' | 'ai';
 
 export default function RecipeNewScreen() {
   const [mode, setMode] = useState<Mode>('choose');
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => (mode === 'choose' ? router.back() : setMode('choose'))}>
-          <Text style={styles.backText}>‹ 뒤로</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>레시피 추가</Text>
-      </View>
+  // 직접 작성은 고정 헤더 + 스크롤 입력 + 고정 CTA 레이아웃을 자체 관리한다.
+  if (mode === 'manual') {
+    return <ManualForm onBack={() => setMode('choose')} />;
+  }
 
-      {mode === 'choose' && <ModeChooser onSelect={setMode} />}
-      {mode === 'manual' && <ManualForm />}
-      {mode === 'ai' && <AiRecommend />}
-    </ScrollView>
+  return (
+    <View style={styles.container}>
+      <Header
+        title={mode === 'ai' ? 'AI 추천' : '레시피를 추가해보세요'}
+        onBack={() => (mode === 'choose' ? router.back() : setMode('choose'))}
+      />
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {mode === 'choose' && <ModeChooser onSelect={setMode} />}
+        {mode === 'ai' && <AiRecommend />}
+      </ScrollView>
+    </View>
+  );
+}
+
+/* ── 공통 헤더 (뒤로가기 + 가운데 제목) ───────────────────── */
+function Header({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={onBack}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로"
+      >
+        <Ionicons name="chevron-back" size={28} color={colors.textPrimary} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>{title}</Text>
+    </View>
   );
 }
 
@@ -47,22 +69,26 @@ function ModeChooser({ onSelect }: { onSelect: (m: Mode) => void }) {
   return (
     <View style={styles.chooser}>
       <TouchableOpacity style={styles.choiceCard} onPress={() => onSelect('manual')}>
-        <Text style={styles.choiceIcon}>✍️</Text>
-        <Text style={styles.choiceTitle}>직접 작성</Text>
-        <Text style={styles.choiceDesc}>제목과 내용을 직접 입력해요.</Text>
+        <View style={styles.choiceHeader}>
+          <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+          <Text style={styles.choiceTitle}>직접 작성</Text>
+        </View>
+        <Text style={styles.choiceDesc}>제목과 내용을 직접 입력하세요.</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.choiceCard} onPress={() => onSelect('ai')}>
-        <Text style={styles.choiceIcon}>🤖</Text>
-        <Text style={styles.choiceTitle}>AI 추천</Text>
-        <Text style={styles.choiceDesc}>냉장고 재료로 레시피를 추천받아요.</Text>
+        <View style={styles.choiceHeader}>
+          <MaterialCommunityIcons name="robot-outline" size={22} color={colors.textPrimary} />
+          <Text style={styles.choiceTitle}>AI 추천</Text>
+        </View>
+        <Text style={styles.choiceDesc}>냉장고 재료로 레시피를 추천해줘요.</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 /* ── 직접 작성 (기존 수동 흐름) ──────────────────────────── */
-function ManualForm() {
+function ManualForm({ onBack }: { onBack: () => void }) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -72,7 +98,7 @@ function ManualForm() {
     if (!user) return;
     const t = title.trim();
     if (!t) {
-      Alert.alert('알림', '제목을 입력해주세요.');
+      Alert.alert('알림', '레시피 이름을 입력해주세요.');
       return;
     }
     setSaving(true);
@@ -87,39 +113,46 @@ function ManualForm() {
   }
 
   return (
-    <>
-      <View style={styles.field}>
-        <Text style={styles.label}>제목 *</Text>
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="레시피 제목"
-          placeholderTextColor={colors.textDisabled}
-        />
-      </View>
+    <View style={styles.container}>
+      <Header title="직접 추가" onBack={onBack} />
 
-      <View style={styles.field}>
-        <Text style={styles.label}>내용</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
-          value={body}
-          onChangeText={setBody}
-          placeholder="재료, 조리 순서 등을 자유롭게 적어보세요."
-          placeholderTextColor={colors.textDisabled}
-          multiline
-          textAlignVertical="top"
-        />
-      </View>
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <View style={styles.field}>
+          <Text style={styles.label}>레시피 이름</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="레시피를 입력하세요."
+            placeholderTextColor={colors.textTertiary}
+          />
+        </View>
 
-      <TouchableOpacity
-        style={[styles.button, saving && styles.buttonDisabled]}
-        onPress={handleSave}
-        disabled={saving}
-      >
-        {saving ? <ActivityIndicator color={colors.background} /> : <Text style={styles.buttonText}>저장</Text>}
-      </TouchableOpacity>
-    </>
+        <View style={styles.field}>
+          <Text style={styles.label}>조리법</Text>
+          <TextInput
+            style={styles.textarea}
+            value={body}
+            onChangeText={setBody}
+            placeholder="재료, 조리 순서 등을 자유롭게 적어보세요."
+            placeholderTextColor={colors.textTertiary}
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
+      </ScrollView>
+
+      {/* 고정 CTA */}
+      <View style={styles.ctaBar}>
+        <TouchableOpacity
+          style={[styles.cta, saving && styles.buttonDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? <ActivityIndicator color={colors.background} /> : <Text style={styles.ctaText}>추가하기</Text>}
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -329,25 +362,81 @@ function AiRecommend() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, paddingTop: 28, gap: 20 },
-  header: { gap: 4 },
-  backText: { fontSize: 15, color: colors.primary, marginBottom: 4 },
-  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  body: { padding: spacing.lg, gap: spacing.lg },
 
-  // 공통
-  field: { gap: 6 },
-  label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  // 헤더(뒤로 + 가운데 제목)
+  header: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+    justifyContent: 'center',
+  },
+  backBtn: { position: 'absolute', left: spacing.sm, top: spacing.xl },
+  headerTitle: { ...typography.heading2, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+
+  // 모드 선택 카드
+  chooser: { gap: spacing.md },
+  choiceCard: {
+    backgroundColor: colors.background,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    gap: spacing.xs,
+    shadowColor: colors.thumbnail, // 시안 그림자색 rgba(33,58,36,…) = thumbnail(#213A24)
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  choiceHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  choiceTitle: { ...typography.heading2, color: colors.textPrimary },
+  choiceDesc: { ...typography.caption, color: colors.textTertiary },
+
+  // 직접 작성 폼
+  field: { gap: spacing.md },
+  label: { ...typography.body, fontWeight: '600', color: colors.textPrimary },
   input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    fontSize: 15,
+    height: INPUT_HEIGHT,
+    borderWidth: 2,
+    borderColor: colors.primary, // 시안: 초록 2px 테두리
+    borderRadius: radius.card, // 시안 12 — 토큰 없어 최근접 card(16) 사용
+    paddingHorizontal: spacing.md,
+    ...typography.body,
     color: colors.textPrimary,
     backgroundColor: colors.background,
   },
-  multiline: { minHeight: 160 },
+  textarea: {
+    minHeight: TEXTAREA_HEIGHT,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    ...typography.body,
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
+    textAlignVertical: 'top',
+  },
+
+  // 고정 CTA (직접 작성)
+  ctaBar: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.background,
+    shadowColor: colors.textPrimary,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cta: {
+    height: button.height,
+    borderRadius: button.radius, // 시안 rounded-100 = pill
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: { ...typography.heading2, color: colors.background, fontWeight: '700' },
+
+  // ── 아래는 AI 추천 모드 전용 (이번 디자인 교체 범위 밖, 그대로 유지) ──
   button: {
     backgroundColor: colors.primary,
     borderRadius: 12,
@@ -366,20 +455,6 @@ const styles = StyleSheet.create({
     borderColor: colors.primaryTintBorder,
   },
   secondaryButtonText: { color: colors.primary, fontSize: 16, fontWeight: '700' },
-
-  // 모드 선택
-  chooser: { gap: 14 },
-  choiceCard: {
-    padding: 20,
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 6,
-  },
-  choiceIcon: { fontSize: 32 },
-  choiceTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-  choiceDesc: { fontSize: 14, color: colors.textSecondary },
 
   // 안내/로딩
   centerBlock: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 60 },

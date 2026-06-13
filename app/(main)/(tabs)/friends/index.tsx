@@ -1,21 +1,37 @@
-import { colors, radius } from '@/constants/theme';
+// 커뮤니티(친구) 화면. 친구를 "냉장고 카드" 2열 그리드로 보여준다(Figma node 1:534).
+// 헤더의 친구추가(사람+) 아이콘을 누르면 "친구 추가" 모달(node 1:671)이 뜬다.
+// 디자인에 없는 상태(받은 요청 섹션/빈 상태/로딩/에러)는 삭제하지 않고 새 톤으로 유지한다.
+import { button, colors, radius, spacing, typography } from '@/constants/theme';
 import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { addFriend, acceptFriend, fetchFriends, fetchPendingRequests, removeFriend } from '@/lib/friends';
 import { extractErrorMessage } from '@/lib/items';
 import type { Friend, PendingRequest } from '@/types/friend';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+// ── 시안 고정 치수 / 토큰에 없는 값(플래그) ──
+const LOGO_SIZE = 20;        // ⚠️ 토큰 없음 — 헤더 Logo (Figma SemiBold 20)
+const ADD_ICON_SIZE = 26;    // 헤더 친구추가(사람+) 아이콘
+const SEARCH_ICON_SIZE = 16; // 모달 돋보기 아이콘 (Figma 15)
+const CARD_GAP = 10;         // ⚠️ 토큰 없음 — 카드 내부 세로 간격 (Figma gap-10)
+const CARD_MIN_HEIGHT = 105; // ⚠️ 토큰 없음 — 카드 높이 (Figma 105)
+const CARD_TITLE_SIZE = 16;  // ⚠️ 토큰 없음 — 카드 제목 (Figma 16, typography엔 16 없음)
+const MODAL_TITLE_SIZE = 16; // ⚠️ 토큰 없음 — 모달 제목 (Figma 16)
+// 카드 그림자: 색은 colors.thumbnail(#213A24=rgba 33,58,36)과 일치, 나머지(offset/opacity/radius)는 ⚠️ 토큰 없음
 
 export default function FriendsScreen() {
   const { user } = useAuth();
@@ -28,6 +44,7 @@ export default function FriendsScreen() {
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [addModalVisible, setAddModalVisible] = useState(false); // '친구 추가' 모달 표시 여부(표현용 state)
 
   const loadAll = useCallback(() => {
     if (!user) return;
@@ -58,6 +75,7 @@ export default function FriendsScreen() {
     try {
       const profile = await addFriend(user.id, target);
       setUsername('');
+      setAddModalVisible(false);
       Alert.alert('친구 요청', `${profile.display_name}님에게 친구 요청을 보냈어요.`);
     } catch (e: unknown) {
       Alert.alert('요청 실패', extractErrorMessage(e));
@@ -129,6 +147,7 @@ export default function FriendsScreen() {
     );
   }
 
+  // 받은 친구 요청 섹션 — 디자인엔 없지만 유지(카드 그리드 위, 중립 카드 톤). 요청이 있을 때만 표시.
   const ListHeader = pendingRequests.length > 0 ? (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>받은 친구 요청 {pendingRequests.length}</Text>
@@ -141,43 +160,31 @@ export default function FriendsScreen() {
           onReject={() => handleReject(req)}
         />
       ))}
-      <Text style={styles.sectionTitle}>친구 목록</Text>
     </View>
   ) : null;
 
   return (
     <View style={styles.container}>
+      {/* 1. 헤더: 좌측 Logo / 우측 알림종 + 친구추가 아이콘 */}
       <View style={styles.header}>
-        <Text style={styles.title}>친구</Text>
-        <NotificationBell />
+        <Text style={styles.logo}>Logo</Text>
+        <View style={styles.headerActions}>
+          <NotificationBell />
+          <TouchableOpacity
+            onPress={() => setAddModalVisible(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="친구 추가"
+          >
+            <Ionicons name="person-add-outline" size={ADD_ICON_SIZE} color={colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <View style={styles.addBox}>
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-          placeholder="친구 아이디(username) 입력"
-          placeholderTextColor={colors.textDisabled}
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!adding}
-          onSubmitEditing={handleAdd}
-          returnKeyType="done"
-        />
-        <TouchableOpacity
-          style={[styles.addButton, adding && styles.addButtonDisabled]}
-          onPress={handleAdd}
-          disabled={adding}
-        >
-          {adding ? (
-            <ActivityIndicator color={colors.background} />
-          ) : (
-            <Text style={styles.addButtonText}>요청</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      {/* 2. 화면 제목 */}
+      <Text style={styles.title}>커뮤니티</Text>
 
+      {/* 3. 본문: 로딩 / 에러 / 친구 카드 그리드 */}
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -190,7 +197,9 @@ export default function FriendsScreen() {
         <FlatList
           data={friends}
           keyExtractor={(f) => f.friendshipId}
+          numColumns={2}
           ListHeaderComponent={ListHeader}
+          columnWrapperStyle={styles.column}
           contentContainerStyle={
             friends.length === 0 && pendingRequests.length === 0
               ? styles.emptyContainer
@@ -198,7 +207,7 @@ export default function FriendsScreen() {
           }
           ListEmptyComponent={pendingRequests.length === 0 ? <EmptyState /> : null}
           renderItem={({ item }) => (
-            <FriendRow
+            <FriendCard
               friend={item}
               removing={removingId === item.friendshipId}
               onPress={() => router.push(`/(main)/friends/${item.profile.id}` as never)}
@@ -207,10 +216,21 @@ export default function FriendsScreen() {
           )}
         />
       )}
+
+      {/* 4. 친구 추가 모달 (헤더 아이콘으로 염) */}
+      <AddFriendModal
+        visible={addModalVisible}
+        username={username}
+        adding={adding}
+        onChangeUsername={setUsername}
+        onClose={() => setAddModalVisible(false)}
+        onSubmit={handleAdd}
+      />
     </View>
   );
 }
 
+/** 받은 친구 요청 한 줄 — 이름/아이디 + 수락·거절. (디자인 외 유지 요소, 중립 카드 톤) */
 function RequestRow({
   request,
   accepting,
@@ -252,7 +272,8 @@ function RequestRow({
   );
 }
 
-function FriendRow({
+/** 친구 1명을 그리는 "냉장고 카드". 제목=이름 / 아래=@아이디. 탭=상세, 롱프레스=삭제. */
+function FriendCard({
   friend,
   removing,
   onPress,
@@ -265,135 +286,206 @@ function FriendRow({
 }) {
   return (
     <TouchableOpacity
-      style={[styles.row, removing && styles.rowRemoving]}
+      style={[styles.card, removing && styles.cardRemoving]}
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={400}
       disabled={removing}
+      activeOpacity={0.8}
     >
-      <View style={styles.rowMain}>
-        <Text style={styles.rowName}>{friend.profile.display_name}</Text>
-        <Text style={styles.rowMeta}>@{friend.profile.username}</Text>
-      </View>
+      <Text style={styles.cardTitle} numberOfLines={1}>{friend.profile.display_name}</Text>
       {removing ? (
         <ActivityIndicator size="small" color={colors.danger} />
       ) : (
-        <Text style={styles.rowChevron}>›</Text>
+        <Text style={styles.cardMeta} numberOfLines={1}>@{friend.profile.username}</Text>
       )}
     </TouchableOpacity>
   );
 }
 
+/** 친구 추가 모달 — 스크림 + 흰 카드 + 돋보기 입력 + '추가하기' 알약 버튼 (Figma node 1:671). */
+function AddFriendModal({
+  visible,
+  username,
+  adding,
+  onChangeUsername,
+  onClose,
+  onSubmit,
+}: {
+  visible: boolean;
+  username: string;
+  adding: boolean;
+  onChangeUsername: (v: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  const canSubmit = !!username.trim() && !adding; // 입력 있고 전송 중 아닐 때만 활성
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      {/* 어두운 스크림 — 누르면 닫힘 */}
+      <Pressable style={styles.scrim} onPress={onClose}>
+        {/* 카드 본체 — 자체 Pressable이 터치를 잡아 스크림(바깥) 닫힘으로 전파되지 않게 한다 */}
+        <Pressable style={styles.modalCard} onPress={() => {}}>
+          <Text style={styles.modalTitle}>친구 추가</Text>
+          <View style={styles.modalInputRow}>
+            <Ionicons name="search" size={SEARCH_ICON_SIZE} color={colors.textDisabled} />
+            <TextInput
+              style={styles.modalInput}
+              value={username}
+              onChangeText={onChangeUsername}
+              placeholder="아이디를 입력하세요"
+              placeholderTextColor={colors.textDisabled}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!adding}
+              onSubmitEditing={onSubmit}
+              returnKeyType="done"
+            />
+          </View>
+          <TouchableOpacity
+            style={[styles.addButton, !canSubmit && styles.addButtonDisabled]}
+            onPress={onSubmit}
+            disabled={!canSubmit}
+          >
+            {adding ? (
+              <ActivityIndicator color={colors.background} />
+            ) : (
+              <Text style={[styles.addButtonText, !canSubmit && styles.addButtonTextDisabled]}>추가하기</Text>
+            )}
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+/** 친구가 없을 때 안내. (디자인 외 유지 요소) */
 function EmptyState() {
   return (
     <View style={styles.empty}>
       <Text style={styles.emptyIcon}>👥</Text>
       <Text style={styles.emptyTitle}>아직 친구가 없어요</Text>
-      <Text style={styles.emptyDesc}>위에서 친구의 아이디를 입력해 요청을 보내보세요.</Text>
+      <Text style={styles.emptyDesc}>오른쪽 위 + 버튼으로 친구를 추가해 보세요.</Text>
     </View>
   );
 }
 
+// 아래는 각 부분의 모양·배치. 색·간격·radius는 constants/theme.ts 토큰 기준(⚠️=토큰 없는 시안 고정값).
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.surface }, // 화면 배경(옅은 회색면) — F4F6F4 흡수된 surface
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: {
+  header: { // 상단 헤더(Logo ↔ 알림종+친구추가)
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.lg, // 24
+    paddingTop: spacing.xl,        // 32
+    paddingBottom: spacing.sm,     // 8
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  addBox: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  input: {
+  logo: { fontSize: LOGO_SIZE, fontWeight: '700', color: colors.thumbnail }, // 좌측 'Logo' (다크 그린)
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md }, // 종 + 친구추가 묶음
+  title: { ...typography.heading1, color: colors.textPrimary, paddingHorizontal: spacing.lg, marginBottom: spacing.md }, // '커뮤니티' 제목
+
+  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: CARD_GAP }, // 그리드 바깥 여백 + 줄 간격
+  column: { gap: spacing.md }, // 한 줄 안 두 카드 사이 가로 간격(16)
+  emptyContainer: { flexGrow: 1 }, // 빈 상태일 때 가운데 정렬되도록
+
+  card: { // 친구 = 냉장고 카드(흰 카드 + 은은한 그림자)
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
-  },
-  addButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    alignItems: 'center',
+    minHeight: CARD_MIN_HEIGHT,     // ⚠️ 105
+    backgroundColor: colors.background, // 흰색 카드
+    borderRadius: radius.card,      // 16
+    padding: spacing.md,            // 16
+    gap: CARD_GAP,                  // ⚠️ 10
     justifyContent: 'center',
-    minWidth: 64,
+    // 그림자: 색은 colors.thumbnail, 나머지 ⚠️ 토큰 없음(Figma 0/4/6, 0.05)
+    shadowColor: colors.thumbnail,
+    shadowOffset: { width: 0, height: 4 }, // ⚠️
+    shadowOpacity: 0.05,                   // ⚠️
+    shadowRadius: 6,                       // ⚠️
+    elevation: 2,                          // ⚠️ Android 그림자 근사값
   },
-  addButtonDisabled: { opacity: 0.6 },
-  addButtonText: { color: colors.background, fontSize: 15, fontWeight: '700' },
-  list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
-  emptyContainer: { flex: 1 },
-  section: { gap: 10, marginBottom: 4 },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: 0.3,
-    marginTop: 4,
-    marginBottom: 2,
-  },
+  cardRemoving: { opacity: 0.5 }, // 삭제 중 흐리게
+  cardTitle: { fontSize: CARD_TITLE_SIZE, fontWeight: '700', color: colors.textSecondary }, // 카드 제목(이름) — 시안대로 회색 굵게
+  cardMeta: { ...typography.caption, color: colors.textSecondary }, // 카드 보조줄(@아이디)
+
+  // 받은 친구 요청 섹션 (디자인 외 유지)
+  section: { gap: CARD_GAP, marginBottom: spacing.sm },
+  sectionTitle: { ...typography.caption, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs },
   requestRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 14,
-    backgroundColor: colors.warningTint,
-    borderRadius: 12,
+    padding: spacing.md,
+    backgroundColor: colors.background, // 중립 카드 톤(경고색 제거)
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.warningTintBorder,
+    borderColor: colors.border,
   },
-  requestActions: { flexDirection: 'row', gap: 8 },
+  requestActions: { flexDirection: 'row', gap: spacing.sm },
   acceptButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     minWidth: 52,
     alignItems: 'center',
   },
   rejectButton: {
     backgroundColor: colors.surface,
     borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   actionDisabled: { opacity: 0.5 },
-  acceptText: { color: colors.background, fontSize: 14, fontWeight: '600' },
-  rejectText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
-  row: {
+  acceptText: { ...typography.caption, color: colors.background, fontWeight: '600' },
+  rejectText: { ...typography.caption, color: colors.textSecondary, fontWeight: '600' },
+  rowMain: { gap: spacing.xs, flex: 1 },
+  rowName: { ...typography.body, fontWeight: '600', color: colors.textPrimary },
+  rowMeta: { ...typography.caption, color: colors.textSecondary },
+
+  // 친구 추가 모달
+  scrim: { flex: 1, backgroundColor: colors.overlay, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  modalCard: {
+    width: '100%',
+    backgroundColor: colors.background,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    gap: spacing.lg,
+    // 그림자(Figma 0/4/2, 0.25) ⚠️
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 }, // ⚠️
+    shadowOpacity: 0.25,                   // ⚠️
+    shadowRadius: 2,                       // ⚠️
+    elevation: 4,                          // ⚠️
+  },
+  modalTitle: { fontSize: MODAL_TITLE_SIZE, fontWeight: '700', color: colors.textSecondary, textAlign: 'center' },
+  modalInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    gap: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  rowRemoving: { opacity: 0.5 },
-  rowMain: { gap: 4, flex: 1 },
-  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  rowMeta: { fontSize: 13, color: colors.textSecondary },
-  rowChevron: { fontSize: 22, color: colors.textDisabled, marginLeft: 8 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 40 },
+  modalInput: { flex: 1, ...typography.body, color: colors.textPrimary, paddingVertical: 0 },
+  addButton: { // '추가하기' 알약 버튼 — 입력 있을 때 primary, 없으면 회색(비활성)
+    height: button.height,         // 48
+    borderRadius: button.radius,   // pill
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  addButtonDisabled: { backgroundColor: colors.border }, // 비활성: 회색 채움(Figma #E5E5EA)
+  addButtonText: { ...typography.body, fontWeight: '700', color: colors.background },
+  addButtonTextDisabled: { color: colors.textSecondary }, // 비활성 글자색
+
+  // 빈 상태 (디자인 외 유지)
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: CARD_GAP, paddingTop: 40 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
-  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-  errorText: { color: colors.danger, fontSize: 15 },
+  emptyTitle: { ...typography.heading2, color: colors.textPrimary },
+  emptyDesc: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { ...typography.body, color: colors.danger },
 });

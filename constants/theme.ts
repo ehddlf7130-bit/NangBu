@@ -3,39 +3,37 @@
 // ✅ = Figma에서 확인된 값 / ⚠️ = 추정값(디자이너 검수 필요)
 
 export const colors = {
-  // 브랜드/포인트
-  primary: '#469860',        // ✅ 주요 초록 — 활성 버튼, 선택 탭, D-day 뱃지
-  accent: '#FF9500',         // ⚠️ 포인트 주황 (iOS Orange 가정) — 알림/상태 점
-  thumbnail: '#213A24',      // ✅ 진한 초록 — 썸네일/이미지 플레이스홀더 배경
-
-  // 배경/면
-  background: '#FFFFFF',      // ✅ 화면·카드 배경
-  surface: '#F2F2F2',        // ⚠️ 카드/입력칸 살짝 어두운 면 (추정)
+  // 브랜드
+  primary: '#469860',           // 메인 브랜드 그린 — 활성/선택, CTA, 강조 글자·아이콘
+  primaryTint: '#E9F3EC',       // 선택된 칩/행 배경 (옅은 그린)
+  primaryTintBorder: '#C5E2CF', // 선택된 칩/행 테두리
+  thumbnail: '#213A24',         // 다크 그린 — 썸네일/아바타 배경
 
   // 텍스트
-  textPrimary: '#1A1A1A',    // ⚠️ 제목·본문 (거의 검정)
-  textSecondary: '#8E8E93',  // ⚠️ 보조·캡션 (추정)
-  textDisabled: '#C7C7CC',   // ⚠️ 비활성 텍스트 (추정)
+  textPrimary: '#1A1A1A',       // 제목·본문·기본 아이콘
+  textSecondary: '#8E8E93',     // 보조·캡션, 비활성 탭, 보조 아이콘
+  textTertiary: '#AEAEB2',      // 한 단계 더 약한 텍스트 (신규)
+  textDisabled: '#C7C7CC',      // 비활성, placeholder
 
-  // 선/비활성
-  border: '#E5E5EA',         // ⚠️ 테두리, 구분선 (추정)
-  disabled: '#E0E0E0',       // ⚠️ 비활성 버튼 배경 (추정)
+  // 경계선·면
+  border: '#E5E5EA',            // 연한 구분선·테두리
+  borderStrong: '#D1D1D6',      // 진한 경계선 (신규)
+  surface: '#F2F2F7',           // 카드·입력칸 배경 (F4F6F4 흡수 + F2F2F2 오타 교정)
+  background: '#FFFFFF',         // 화면/카드 기본 배경
 
-  // 상태
-  danger: '#E5484D',         // ⚠️ 유통기한 지남, 삭제 (임시)
-  warning: '#FF9500',        // ⚠️ 유통기한 임박 — 주황 재사용
+  // 상태 — 위험(빨강)
+  danger: '#E5484D',
+  dangerTint: '#FDECEC',
+  dangerTintBorder: '#F7C5C7',
 
-  // 틴트 (옅은 강조 배경/테두리) — ⚠️ 추정값, 디자이너 검수 필요
-  primaryTint: '#E9F3EC',        // ⚠️ 옅은 그린 — 칩/배지 배경 (구 옅은 파랑 대체)
-  primaryTintBorder: '#C5E2CF',  // ⚠️ 옅은 그린 테두리
-  dangerTint: '#FDECEC',         // ⚠️ 옅은 빨강 — 위험 배경
-  dangerTintBorder: '#F7C5C7',   // ⚠️ 옅은 빨강 테두리
-  warningTint: '#FFF6E5',        // ⚠️ 옅은 주황 — 경고 배경
-  warningTintBorder: '#FBE2A3',  // ⚠️ 옅은 주황 테두리
+  // 상태 — 경고(주황) ★ D-day 중간단계, danger와 절대 통합 금지
+  warning: '#FF9500',
+  warningTint: '#FFF6E5',
+  warningTintBorder: '#FBE2A3',
 
-  // 기타
-  overlay: 'rgba(0,0,0,0.45)', // ⚠️ 바텀시트/모달 배경 스크림 (추정)
-};
+  // 오버레이
+  overlay: 'rgba(0, 0, 0, 0.45)', // 바텀시트 뒷배경 스크림
+} as const;
 
 export const radius = {
   pill: 9999,   // ✅ 버튼 알약형 (327×48)

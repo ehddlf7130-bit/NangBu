@@ -1,5 +1,5 @@
 import { colors } from '@/constants/theme';
-import ItemForm from '@/components/ItemForm';
+import RegisterItemForm from '@/components/RegisterItemForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveExpiryDays } from '@/lib/expiry';
 import { fetchIngredientById } from '@/lib/ingredients';
@@ -9,7 +9,7 @@ import { masterDaysFor } from '@/types/ingredient';
 import type { ItemFormValues, StorageType } from '@/types/item';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 // 권장 보관방식(일수>0) 중 첫 번째를 기본 선택할 때의 우선순위.
 const STORAGE_ORDER: StorageType[] = ['fridge', 'freezer', 'room'];
@@ -95,31 +95,19 @@ export default function RegisterNewScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>식품 등록</Text>
-      {/* 탭 화면이라 인스턴스가 유지된다. 등록 건이 바뀌면 key로 강제 재마운트해
-          ItemForm이 새 initialValues를 다시 읽도록 한다(프리필 갱신). */}
-      <ItemForm
-        key={`${category ?? ''}:${ingredientId ?? 'manual'}`}
-        mode="create"
-        initialValues={initialValues}
-        onSubmit={handleSubmit}
-        resolveExpiry={resolveExpiry}
-        ingredientDays={ingredientDays}
-      />
-    </View>
+    // 탭 화면이라 인스턴스가 유지된다. 등록 건이 바뀌면 key로 강제 재마운트해
+    // 폼이 새 initialValues를 다시 읽도록 한다(프리필 갱신).
+    <RegisterItemForm
+      key={`${category ?? ''}:${ingredientId ?? 'manual'}`}
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      resolveExpiry={resolveExpiry}
+      ingredientDays={ingredientDays}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { justifyContent: 'center', alignItems: 'center' },
-  header: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 12,
-  },
 });

@@ -1,8 +1,10 @@
-import { colors } from '@/constants/theme';
+// 레시피 목록 화면(하단 탭 '레시피').
+// 헤더(로고+알림종+추가) · '나의 레시피' 제목 · 레시피 카드 리스트를 그린다.
+// 카드 탭 → 상세, 우상단 + → 작성 화면 진입.
+import { colors, radius, spacing, typography } from '@/constants/theme';
 import AddButton from '@/components/AddButton';
 import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatDateTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
 import { fetchMyRecipes } from '@/lib/recipes';
 import type { Recipe } from '@/types/recipe';
@@ -55,8 +57,9 @@ export default function RecipesScreen() {
 
   return (
     <View style={styles.container}>
+      {/* 헤더: 로고 + 알림종 + 추가 */}
       <View style={styles.header}>
-        <Text style={styles.title}>레시피</Text>
+        <Text style={styles.logo}>냉부</Text>
         <View style={styles.headerActions}>
           <NotificationBell />
           <AddButton
@@ -66,6 +69,10 @@ export default function RecipesScreen() {
           />
         </View>
       </View>
+
+      {/* 화면 제목 */}
+      <Text style={styles.screenTitle}>나의 레시피</Text>
+
       <FlatList
         data={recipes}
         keyExtractor={(r) => r.id}
@@ -79,11 +86,14 @@ export default function RecipesScreen() {
   );
 }
 
+// 레시피 한 장의 카드. 제목 + 내용(body) 2줄 미리보기.
 function RecipeRow({ recipe, onPress }: { recipe: Recipe; onPress: () => void }) {
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
-      <Text style={styles.rowTitle} numberOfLines={1}>{recipe.title}</Text>
-      <Text style={styles.rowMeta}>{formatDateTime(recipe.created_at)}</Text>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <Text style={styles.cardTitle} numberOfLines={1}>{recipe.title}</Text>
+      {recipe.body ? (
+        <Text style={styles.cardBody} numberOfLines={2}>{recipe.body}</Text>
+      ) : null}
     </TouchableOpacity>
   );
 }
@@ -99,33 +109,47 @@ function EmptyState() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.surface }, // 시안의 옅은 회색 페이지(F4F6F4→surface)
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+
+  // 헤더
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
   },
-  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  list: { paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
+  logo: { ...typography.heading1, color: colors.thumbnail }, // 좌상단 '냉부' 로고(다크 그린)
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+
+  // 화면 제목
+  screenTitle: { ...typography.heading1, color: colors.textPrimary, textAlign: 'center', paddingBottom: spacing.md },
+
+  // 리스트
+  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
   emptyContainer: { flex: 1 },
-  row: {
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 6,
+
+  // 카드
+  card: {
+    backgroundColor: colors.background, // 흰 카드
+    borderRadius: radius.card,
+    padding: spacing.md,
+    gap: spacing.xs,
+    shadowColor: colors.thumbnail, // 시안 그림자색 rgba(33,58,36,…) = thumbnail(#213A24)
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  rowTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  rowMeta: { fontSize: 13, color: colors.textSecondary },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80 },
+  cardTitle: { ...typography.heading2, color: colors.textPrimary },
+  cardBody: { ...typography.caption, color: colors.textSecondary },
+
+  // 빈 상태
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingTop: 80 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
-  emptyDesc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-  errorText: { color: colors.danger, fontSize: 15 },
+  emptyTitle: { ...typography.heading2, color: colors.textPrimary },
+  emptyDesc: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { ...typography.body, color: colors.danger },
 });
