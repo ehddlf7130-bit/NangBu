@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { flattenItem } from '@/lib/items';
 import type { Friend, FriendshipStatus, PendingRequest, Profile } from '@/types/friend';
 import type { Item } from '@/types/item';
 
@@ -157,9 +158,9 @@ export async function fetchFriendProfile(friendId: string): Promise<Profile> {
 export async function fetchFriendItems(friendId: string): Promise<Item[]> {
   const { data, error } = await supabase
     .from('items')
-    .select('*')
+    .select('*, ingredient_master(image_path)')
     .eq('owner_id', friendId)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map(flattenItem);
 }

@@ -25,7 +25,7 @@ export function extractErrorMessage(e: unknown): string {
 
 // 임베드 조회 행 → Item으로 평탄화. 연결 마스터의 image_path를 끌어올리고 임베드 키는 제거한다.
 // ingredient_master가 null(미연결)이거나 image_path가 없으면 image_path: null.
-function flattenItem(row: any): Item {
+export function flattenItem(row: any): Item {
   const { ingredient_master, ...rest } = row;
   return { ...rest, image_path: ingredient_master?.image_path ?? null };
 }
