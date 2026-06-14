@@ -1,6 +1,16 @@
 import { supabase } from './supabase';
 import type { IngredientMaster } from '@/types/ingredient';
 
+// 표준 재료 대표 이미지가 저장된 public Storage 버킷 이름.
+const INGREDIENT_IMAGES_BUCKET = 'ingredient-images';
+
+/** image_path(파일명)를 public URL로 변환. null/빈값이면 null(화면에서 placeholder). */
+export function ingredientImageUrl(imagePath: string | null | undefined): string | null {
+  const path = imagePath?.trim();
+  if (!path) return null;
+  return supabase.storage.from(INGREDIENT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
 /** 한 카테고리의 표준 식재료 목록 조회 (등록 - 표준재료 선택 화면용). 읽기 전용 마스터. */
 export async function fetchIngredientsByCategory(
   category: string,

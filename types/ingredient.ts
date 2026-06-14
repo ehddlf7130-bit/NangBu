@@ -9,6 +9,7 @@ export interface IngredientMaster {
   fridge_days: number;
   freezer_days: number;
   storage_tip: string | null;
+  image_path: string | null; // ingredient-images 버킷 내 파일명(경로 없이). null이면 대표 이미지 없음.
   created_at: string;
 }
 

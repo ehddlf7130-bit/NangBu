@@ -1,8 +1,9 @@
-import { colors } from '@/constants/theme';
+import { colors, radius, spacing } from '@/constants/theme';
 import { formatDateTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
 import { deleteRecipe, fetchRecipe, updateRecipe } from '@/lib/recipes';
 import type { Recipe } from '@/types/recipe';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -157,6 +158,8 @@ export default function RecipeDetailScreen() {
             />
           </View>
         </>
+      ) : recipe.source === 'ai' && recipe.ai_meta ? (
+        <AiRecipeView recipe={recipe} />
       ) : (
         <>
           <Text style={styles.recipeTitle}>{recipe.title}</Text>
@@ -165,6 +168,63 @@ export default function RecipeDetailScreen() {
         </>
       )}
     </ScrollView>
+  );
+}
+
+/* ── AI 레시피 읽기 뷰 (Figma node 1-410, recipes/new.tsx 미리보기와 동일 톤) ── */
+function AiRecipeView({ recipe }: { recipe: Recipe }) {
+  const meta = recipe.ai_meta; // 호출부에서 non-null 보장
+  // difficulty: 숫자 아니면 3 폴백 → 1~5 클램프 → 점 5개 중 채움
+  const safeDifficulty =
+    typeof meta?.difficulty === 'number' && Number.isFinite(meta.difficulty)
+      ? meta.difficulty
+      : 3;
+  const filledDots = Math.min(Math.max(Math.round(safeDifficulty), 1), 5);
+  // cook_time_minutes: 숫자 아니면 "-"
+  const cookTimeLabel =
+    typeof meta?.cook_time_minutes === 'number' && Number.isFinite(meta.cook_time_minutes)
+      ? `${meta.cook_time_minutes}분`
+      : '-';
+  const neededIngredients = meta?.needed_ingredients ?? [];
+
+  return (
+    <>
+      <Text style={styles.recipeTitle}>{recipe.title}</Text>
+
+      <View style={styles.metaRow}>
+        <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+        <Text style={styles.metaTime}>{cookTimeLabel}</Text>
+        <Text style={styles.metaSep}>l</Text>
+        <Text style={styles.metaLabel}>난이도</Text>
+        <View style={styles.dots}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i < filledDots ? styles.dotFilled : styles.dotEmpty]}
+            />
+          ))}
+        </View>
+      </View>
+
+      {!!recipe.body && <Text style={styles.recipeBody}>{recipe.body}</Text>}
+
+      {neededIngredients.length > 0 && (
+        <>
+          <View style={styles.divider} />
+          <Text style={styles.sectionLabel}>부족한 재료</Text>
+          <View style={styles.chipWrap}>
+            {neededIngredients.map((ing, i) => (
+              <View key={`${ing.name}-${i}`} style={styles.chip}>
+                <Ionicons name="checkmark" size={12} color={colors.thumbnail} />
+                <Text style={styles.chipText}>
+                  {ing.amount ? `${ing.name} ${ing.amount}` : ing.name}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+    </>
   );
 }
 
@@ -199,4 +259,34 @@ const styles = StyleSheet.create({
   },
   multiline: { minHeight: 160 },
   errorText: { color: colors.danger, fontSize: 15 },
+
+  // ── AI 레시피 읽기 뷰 (Figma node 1-410, new.tsx 미리보기와 동일) ──
+  // 메타: 시계 + "{시간} l 난이도" + 점, Figma var(grays/gray) = textSecondary
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  metaTime: { fontSize: 16, color: colors.textSecondary, letterSpacing: -0.4 },
+  metaSep: { fontSize: 20, fontWeight: '300', color: colors.textSecondary, marginHorizontal: 2 },
+  metaLabel: { fontSize: 16, color: colors.textSecondary, letterSpacing: -0.4 },
+  // 난이도 점 5개 (시안에 값 표현 없어 신규 — 채움=primary / 빈=borderStrong)
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: spacing.xs },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotFilled: { backgroundColor: colors.primary },
+  dotEmpty: { backgroundColor: colors.borderStrong },
+  // 본문(조리 과정): 시안 스타일(14px, grays/gray=textSecondary)
+  recipeBody: { fontSize: 14, lineHeight: 22, color: colors.textSecondary, letterSpacing: -0.4 },
+  // 구분선: Figma 1px var(grays/gray-4) = borderStrong
+  divider: { height: 1, backgroundColor: colors.borderStrong },
+  // 섹션 라벨 "부족한 재료": Figma 12px grays/gray = textSecondary
+  sectionLabel: { fontSize: 12, color: colors.textSecondary, marginBottom: -spacing.sm },
+  // 칩: bg var(grays/gray-6)=surface, 알약형, 체크 + "이름 amount"(thumbnail #213A24)
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+  },
+  chipText: { fontSize: 14, fontWeight: '600', color: colors.thumbnail, letterSpacing: 0.35 },
 });

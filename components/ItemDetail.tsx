@@ -4,10 +4,11 @@
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { getDday, getDdayColor } from '@/lib/expiry';
 import { formatExpireDate } from '@/lib/format';
+import { ingredientImageUrl } from '@/lib/ingredients';
 import { STORAGE_LABELS, type Item } from '@/types/item';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
-const IMAGE_HEIGHT = 200; // 시안 고정 치수 (사진 기능 전까지 단색 placeholder)
+const IMAGE_HEIGHT = 184; // 시안 고정 치수 (node 1-937). 이미지 없으면 단색 placeholder
 const STATUS_DOT_SIZE = 10;
 
 // 표준 보관 정보가 단정적으로 들리지 않도록 한 중립 안내 문구.
@@ -19,6 +20,7 @@ export default function ItemDetail({ item }: { item: Item }) {
   const tip = item.storage_tip?.trim(); // 보관 팁 글(앞뒤 공백 제거)
   const hasTip = !!tip; // 보관 팁이 있는지. 없으면 안내 박스·팁 섹션을 통째로 숨긴다
   const dday = item.expire_date ? getDday(item.expire_date) : null; // 남은 일수. 유통기한 없으면 null(소비기한 줄 숨김)
+  const uri = ingredientImageUrl(item.image_path); // 연결된 표준 재료의 대표 이미지 URL. 없으면 null(단색 placeholder 유지)
 
   // 줄바꿈이 있으면 불릿 리스트, 없으면 한 단락.
   const tipLines = hasTip ? tip.split('\n').map((l) => l.trim()).filter(Boolean) : []; // 팁을 줄 단위로 나눈 것
@@ -26,8 +28,16 @@ export default function ItemDetail({ item }: { item: Item }) {
 
   return (
     <View>
-      {/* 2. 상단 이미지 자리(단색 placeholder) */}
-      <View style={styles.image} />
+      {/* 2. 상단 대표 이미지. 있으면 영역을 꽉 채우고, 없으면 단색 placeholder 유지 */}
+      <View style={styles.image}>
+        {uri && (
+          <Image
+            source={{ uri }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="contain"
+          />
+        )}
+      </View>
 
       <View style={styles.content}>
         {/* 3. 이름 + 보관방식 */}
@@ -79,10 +89,12 @@ export default function ItemDetail({ item }: { item: Item }) {
 
 // 아래는 각 부분의 모양·배치를 정하는 스타일 모음. 위 JSX의 style={styles.이름}과 연결된다.
 const styles = StyleSheet.create({
-  image: { // 맨 위 큰 이미지 자리(지금은 단색, 사진 기능 전까지 placeholder)
+  image: { // 맨 위 대표 이미지 영역. 이미지 없으면 단색, 있으면 이미지가 덮음
     width: '100%',
     height: IMAGE_HEIGHT,
-    backgroundColor: colors.thumbnail,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background, // contain 여백을 흰색으로 (초록 대신)
+    overflow: 'hidden', // 안의 이미지가 둥근 모서리 밖으로 삐져나오지 않게
   },
   content: { // 이미지 아래 글자 영역 전체의 안쪽 여백과 요소 간격
     paddingHorizontal: spacing.lg,

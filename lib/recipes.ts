@@ -4,6 +4,7 @@ import type { Item } from '@/types/item';
 import type {
   AiRecipeResult,
   Recipe,
+  RecipeAiMeta,
   RecipeFormValues,
   RecipeSource,
 } from '@/types/recipe';
@@ -30,11 +31,12 @@ export async function fetchRecipe(recipeId: string): Promise<Recipe> {
   return data;
 }
 
-/** 레시피 추가 (source 기본값은 수동 입력). */
+/** 레시피 추가 (source 기본값은 수동 입력). AI 레시피는 aiMeta를 ai_meta 컬럼에 함께 저장. */
 export async function createRecipe(
   userId: string,
   values: RecipeFormValues,
   source: RecipeSource = 'manual',
+  aiMeta: RecipeAiMeta | null = null,
 ): Promise<Recipe> {
   const { data, error } = await supabase
     .from('recipes')
@@ -43,6 +45,7 @@ export async function createRecipe(
       title: values.title,
       body: values.body,
       source,
+      ai_meta: aiMeta,
     })
     .select()
     .single();

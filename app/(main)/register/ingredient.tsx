@@ -4,7 +4,7 @@
 // 재료를 하나 고르면 화면 맨 아래에 확정 버튼이 나타나고, 누르면 다음 등록 폼으로 넘어간다.
 import { CATEGORIES } from '@/constants/categories';
 import { button, colors, radius, spacing, typography } from '@/constants/theme';
-import { fetchIngredientsByCategory, searchIngredients } from '@/lib/ingredients';
+import { fetchIngredientsByCategory, ingredientImageUrl, searchIngredients } from '@/lib/ingredients';
 import { extractErrorMessage } from '@/lib/items';
 import type { IngredientMaster } from '@/types/ingredient';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -193,6 +194,7 @@ export default function IngredientScreen() {
                 // 재료 한 칸 그리기(원형 썸네일 + 이름). 누르면 그 재료를 선택한다.
                 renderItem={({ item }) => {
                   const isSel = selected?.id === item.id; // 이 칸이 지금 선택된 재료인지
+                  const uri = ingredientImageUrl(item.image_path); // 대표 이미지 URL. 없으면 null(단색 원 유지)
                   return (
                     <TouchableOpacity
                       style={[styles.cell, { width: cellWidth }]}
@@ -205,7 +207,15 @@ export default function IngredientScreen() {
                             { width: thumbSize, height: thumbSize, borderRadius: thumbSize / 2 },
                             isSel && styles.thumbSelected, // 선택된 칸만 테두리 강조
                           ]}
-                        />
+                        >
+                          {uri && (
+                            <Image
+                              source={{ uri }}
+                              style={{ width: '100%', height: '100%' }}
+                              resizeMode="cover"
+                            />
+                          )}
+                        </View>
                         {/* 선택된 칸에만 가운데 체크 아이콘을 겹쳐 보여준다 */}
                         {isSel && (
                           <View style={styles.checkOverlay}>
@@ -300,7 +310,7 @@ const styles = StyleSheet.create({
   gridRow: { gap: GAP, marginBottom: GAP }, // 그리드 한 줄(3칸) 사이 간격·줄 간격
   cell: { alignItems: 'center', gap: spacing.xs }, // 재료 한 칸(썸네일 + 이름)을 세로로 가운데 정렬
   thumbWrap: { alignItems: 'center', justifyContent: 'center' }, // 썸네일과 체크 아이콘을 겹쳐 놓기 위한 칸
-  thumb: { backgroundColor: colors.thumbnail }, // 재료 원형 썸네일(지금은 단색 자리, 크기는 코드에서 계산)
+  thumb: { backgroundColor: colors.thumbnail, overflow: 'hidden' }, // 재료 원형 썸네일(이미지 없으면 단색, 있으면 이미지가 덮음). 크기는 코드에서 계산
   thumbSelected: { borderWidth: 2, borderColor: colors.primary }, // 선택된 재료 썸네일에 두른 강조 테두리
   checkOverlay: { // 선택 표시 체크 아이콘을 썸네일 정중앙에 겹치는 자리
     position: 'absolute',

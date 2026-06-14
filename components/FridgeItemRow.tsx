@@ -4,9 +4,10 @@
 import { colors, spacing, typography } from '@/constants/theme';
 import { getDday, getDdayColor } from '@/lib/expiry';
 import { formatExpireDate } from '@/lib/format';
+import { ingredientImageUrl } from '@/lib/ingredients';
 import { STORAGE_LABELS, type Item } from '@/types/item';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // 시안 고정 치수 (테마 토큰이 아닌 레이아웃 스펙).
 const THUMB_SIZE = 50; // 원형 썸네일 지름
@@ -28,6 +29,7 @@ type Props = {
 /** 나의 냉장고 목록의 한 행. 좌=원형 썸네일 / 중=이름·D-day·소비기한·보관방식 / 우=상태점. */
 export default function FridgeItemRow({ item, onPress, onLongPress }: Props) {
   const dday = item.expire_date ? getDday(item.expire_date) : null; // 남은 일수. 유통기한이 없으면 null(=D-day와 색점 숨김)
+  const uri = ingredientImageUrl(item.image_path); // 연결된 표준 재료의 대표 이미지 URL. 없으면 null(초록 원 유지)
 
   return (
     // 줄 전체가 버튼 — 누르면 onPress, 0.4초 이상 누르면 onLongPress 실행
@@ -37,8 +39,16 @@ export default function FridgeItemRow({ item, onPress, onLongPress }: Props) {
       onLongPress={onLongPress}
       delayLongPress={400}
     >
-      {/* 좌: 원형 썸네일 */}
-      <View style={styles.thumb} />
+      {/* 좌: 원형 썸네일. 대표 이미지가 있으면 원 안을 꽉 채우고, 없으면 초록 원 그대로 */}
+      <View style={styles.thumb}>
+        {uri && (
+          <Image
+            source={{ uri }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+          />
+        )}
+      </View>
 
       {/* 중: 이름 + D-day + 임박도 색점 / 소비기한·보관방식 */}
       <View style={styles.body}>
@@ -76,11 +86,12 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.background,
   },
-  thumb: { // 왼쪽 원형 썸네일(지금은 단색 자리)
+  thumb: { // 왼쪽 원형 썸네일. 이미지 없으면 배경색(초록 원), 있으면 이미지가 덮음
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
     backgroundColor: colors.thumbnail,
+    overflow: 'hidden', // 안의 이미지가 원 밖으로 삐져나오지 않게
   },
   body: { // 가운데 글자 묶음(이름줄 + 소비기한·보관방식줄). 남는 가로폭을 모두 차지
     flex: 1,

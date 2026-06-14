@@ -96,14 +96,27 @@ Deno.serve(async (req) => {
 
 ${ingredientList}
 
-위 재료들로 만들 수 있는 레시피 1개를 추천해주세요.
+위 재료들을 최대한 활용하는 레시피 1개를 추천해주세요.
 유통기한(expire_date)이 임박한 재료를 우선적으로 활용하도록 레시피를 구성하세요.
+
+규칙:
+1. used_ingredients = 위 냉장고 재료 목록 중 이 레시피에서 실제로 사용한 것만 넣으세요.
+2. needed_ingredients = 레시피에 필요하지만 냉장고에 없는 재료만 넣으세요.
+   - 위 냉장고 재료 목록에 이미 있는 재료는 needed_ingredients에 절대 넣지 마세요.
+   - 각 항목은 name과 amount(분량)를 가집니다. amount는 한국 요리 단위(g, ml, 개, 큰술, 작은술 등)로 표기하세요.
+3. cook_time_minutes = 예상 조리 시간을 분 단위 정수로.
+4. difficulty = 난이도를 1~5 정수로 (1=매우 쉬움, 5=매우 어려움).
+5. body = 재료와 조리 순서를 단계별로 한국어로 설명하세요.
+
 반드시 아래 JSON 형식으로만 응답하세요.
 
 {
   "title": "레시피 이름",
-  "body": "재료와 조리 순서를 포함한 상세한 설명",
-  "used_ingredients": ["사용한 재료 이름1", "사용한 재료 이름2"]
+  "body": "재료와 조리 순서를 단계별로 설명",
+  "cook_time_minutes": 30,
+  "difficulty": 3,
+  "used_ingredients": ["사용한 냉장고 재료1", "사용한 냉장고 재료2"],
+  "needed_ingredients": [{ "name": "추가 재료 이름", "amount": "분량" }]
 }`;
 
     const requestBody = {
@@ -113,7 +126,7 @@ ${ingredientList}
       },
     };
 
-    // 7. 10초 타임아웃
+    // 7. 30초 타임아웃
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -152,7 +165,14 @@ ${ingredientList}
       return jsonResponse({ error: "레시피 추천에 실패했습니다." }, 500);
     }
 
-    let recipe: { title?: string; body?: string; used_ingredients?: string[] };
+    let recipe: {
+      title?: string;
+      body?: string;
+      cook_time_minutes?: unknown;
+      difficulty?: unknown;
+      used_ingredients?: unknown;
+      needed_ingredients?: unknown;
+    };
     try {
       recipe = JSON.parse(text);
     } catch {
@@ -165,12 +185,49 @@ ${ingredientList}
       return jsonResponse({ error: "레시피 형식이 올바르지 않습니다." }, 500);
     }
 
+    // 방어 처리: 숫자 정규화
+    // difficulty: number 타입의 유한수일 때만 사용(기본 3), 1~5로 클램프 후 정수화
+    const difficulty =
+      typeof recipe.difficulty === "number" && Number.isFinite(recipe.difficulty)
+        ? Math.min(5, Math.max(1, Math.round(recipe.difficulty)))
+        : 3;
+
+    // cook_time_minutes: 숫자 아니면 0
+    const rawCookTime = Number(recipe.cook_time_minutes);
+    const cookTimeMinutes = Number.isFinite(rawCookTime)
+      ? Math.max(0, Math.round(rawCookTime))
+      : 0;
+
+    // used_ingredients: 배열 아니면 빈 배열
+    const usedIngredients = Array.isArray(recipe.used_ingredients)
+      ? recipe.used_ingredients.filter((v): v is string => typeof v === "string")
+      : [];
+
+    // needed_ingredients: 배열 아니면 빈 배열, 각 원소를 {name, amount}로 정규화
+    const normalizeName = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+    const fridgeNames = new Set(items.map((it) => normalizeName(it.name)));
+
+    const neededIngredients = (
+      Array.isArray(recipe.needed_ingredients) ? recipe.needed_ingredients : []
+    )
+      .map((entry) => {
+        const obj = (entry ?? {}) as { name?: unknown; amount?: unknown };
+        return {
+          name: typeof obj.name === "string" ? obj.name : "",
+          amount: typeof obj.amount === "string" ? obj.amount : "",
+        };
+      })
+      .filter((ing) => ing.name !== "")
+      // 요구사항 #3 보장: 입력 냉장고 재료와 이름이 일치하면 서버에서 한 번 더 제거
+      .filter((ing) => !fridgeNames.has(normalizeName(ing.name)));
+
     return jsonResponse({
       title: recipe.title,
       body: recipe.body,
-      used_ingredients: Array.isArray(recipe.used_ingredients)
-        ? recipe.used_ingredients
-        : [],
+      cook_time_minutes: cookTimeMinutes,
+      difficulty,
+      used_ingredients: usedIngredients,
+      needed_ingredients: neededIngredients,
     });
   } catch (err) {
     console.error("처리 중 예외 발생:", err instanceof Error ? err.message : err);
