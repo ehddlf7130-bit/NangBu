@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   thumb: { // 왼쪽 원형 썸네일. 이미지 없으면 배경색(초록 원), 있으면 이미지가 덮음
     width: THUMB_SIZE,
