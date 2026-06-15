@@ -8,9 +8,9 @@ type Notice = { id: string; title: string; date: string; body: string };
 const NOTICES: Notice[] = [
   {
     id: '1',
-    title: 'NangBu 베타 오픈 안내',
+    title: 'Pantree 베타 오픈 안내',
     date: '2026-06-01',
-    body: '냉장고 식재료 관리 앱 NangBu의 베타 버전이 오픈되었습니다. 친구와 냉장고를 공유하고 코멘트를 남겨보세요.',
+    body: '냉장고 식재료 관리 앱 Pantree의 베타 버전이 오픈되었습니다. 친구와 냉장고를 공유하고 코멘트를 남겨보세요.',
   },
   {
     id: '2',

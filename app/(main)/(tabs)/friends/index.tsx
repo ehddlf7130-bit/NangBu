@@ -167,7 +167,7 @@ export default function FriendsScreen() {
     <View style={styles.container}>
       {/* 1. 헤더: 좌측 Logo / 우측 알림종 + 친구추가 아이콘 */}
       <View style={styles.header}>
-        <Text style={styles.logo}>Logo</Text>
+        <Text style={styles.logo}>Pantree</Text>
         <View style={styles.headerActions}>
           <NotificationBell />
           <TouchableOpacity

@@ -85,7 +85,7 @@ export default function MyPageScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* 헤더: 로고(왼) + 알림 벨(오) */}
       <View style={styles.header}>
-        <Text style={styles.logo}>냉부</Text>
+        <Text style={styles.logo}>Pantree</Text>
         <NotificationBell />
       </View>
 

@@ -1,4 +1,6 @@
 import { colors } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,11 +10,8 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
-  View,
+  TouchableOpacity
 } from 'react-native';
-import { Link } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -40,7 +39,7 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Text style={styles.title}>🧊 냉장고 친구</Text>
+      <Text style={styles.title}> Pantree</Text>
 
       <TextInput
         style={styles.input}

@@ -130,7 +130,7 @@ export default function FridgeScreen() {
     <View style={styles.container}>
       {/* 1. 헤더: 로고 + 종 + 추가 */}
       <View style={styles.header}>
-        <Text style={styles.logo}>냉부</Text>
+        <Text style={styles.logo}>Pantree</Text>
         <View style={styles.headerActions}>
           <NotificationBell />
           <AddButton
