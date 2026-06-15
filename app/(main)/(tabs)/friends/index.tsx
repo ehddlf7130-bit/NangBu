@@ -1,10 +1,10 @@
 // 커뮤니티(친구) 화면. 친구를 "냉장고 카드" 2열 그리드로 보여준다(Figma node 1:534).
 // 헤더의 친구추가(사람+) 아이콘을 누르면 "친구 추가" 모달(node 1:671)이 뜬다.
 // 디자인에 없는 상태(받은 요청 섹션/빈 상태/로딩/에러)는 삭제하지 않고 새 톤으로 유지한다.
-import { button, colors, radius, spacing, typography } from '@/constants/theme';
 import NotificationBell from '@/components/NotificationBell';
+import { button, colors, radius, spacing, typography } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
-import { addFriend, acceptFriend, fetchFriends, fetchPendingRequests, removeFriend } from '@/lib/friends';
+import { acceptFriend, addFriend, fetchFriends, fetchPendingRequests, removeFriend } from '@/lib/friends';
 import { extractErrorMessage } from '@/lib/items';
 import type { Friend, PendingRequest } from '@/types/friend';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +24,6 @@ import {
 } from 'react-native';
 
 // ── 시안 고정 치수 / 토큰에 없는 값(플래그) ──
-const LOGO_SIZE = 20;        // ⚠️ 토큰 없음 — 헤더 Logo (Figma SemiBold 20)
 const ADD_ICON_SIZE = 26;    // 헤더 친구추가(사람+) 아이콘
 const SEARCH_ICON_SIZE = 16; // 모달 돋보기 아이콘 (Figma 15)
 const CARD_GAP = 10;         // ⚠️ 토큰 없음 — 카드 내부 세로 간격 (Figma gap-10)
@@ -382,7 +381,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,        // 32
     paddingBottom: spacing.sm,     // 8
   },
-  logo: { fontSize: LOGO_SIZE, fontWeight: '700', color: colors.thumbnail }, // 좌측 'Logo' (다크 그린)
+  logo: { ...typography.heading1, color: colors.thumbnail }, // 좌측 브랜드 로고(다크 그린) — 타 탭 헤더와 동일 토큰
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md }, // 종 + 친구추가 묶음
   title: { ...typography.heading1, color: colors.textPrimary, paddingHorizontal: spacing.lg, marginBottom: spacing.md }, // '커뮤니티' 제목
 

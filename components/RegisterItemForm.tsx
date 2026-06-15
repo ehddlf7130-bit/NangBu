@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // 시안 고정 치수(테마 토큰이 아닌 레이아웃 스펙).
 const MULTILINE_HEIGHT = 80; // 보관법 정보 멀티라인 입력 높이
@@ -52,6 +53,7 @@ export default function RegisterItemForm({
   resolveExpiry,
   ingredientDays,
 }: Props) {
+  const insets = useSafeAreaInsets(); // 하단 세이프에어리어 — CTA 바 하단 패딩에 반영
   const [values, setValues] = useState<ItemFormValues>({ ...DEFAULT_VALUES, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,7 +253,7 @@ export default function RegisterItemForm({
       </ScrollView>
 
       {/* 고정 CTA */}
-      <View style={styles.ctaBar}>
+      <View style={[styles.ctaBar, { paddingBottom: insets.bottom + spacing.md }]}>
         <TouchableOpacity
           style={[styles.cta, loading && styles.ctaDisabled]}
           onPress={handleSubmit}
@@ -363,7 +365,6 @@ const styles = StyleSheet.create({
   ctaBar: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
     backgroundColor: colors.background,
     shadowColor: colors.textPrimary,
     shadowOffset: { width: 0, height: -6 },
@@ -379,5 +380,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ctaDisabled: { opacity: 0.6 },
-  ctaText: { ...typography.heading2, color: colors.background, fontWeight: '700' },
+  ctaText: { ...typography.body, color: colors.background, fontWeight: '700' },
 });

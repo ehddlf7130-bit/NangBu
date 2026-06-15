@@ -215,8 +215,8 @@ function EmptyState({ filtered }: { filtered: boolean }) {
 
 // 아래는 각 부분의 모양·배치를 정하는 스타일 모음. 위 JSX의 style={styles.이름}과 연결된다.
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background }, // 화면 전체를 감싸는 바깥 틀(배경색)
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }, // 로딩 동그라미·에러 문구를 화면 한가운데 놓는 틀
+  container: { flex: 1, backgroundColor: colors.surface }, // 화면 전체 바깥 틀 — 옅은 회색 페이지(커뮤니티·레시피와 동일)
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }, // 로딩 동그라미·에러 문구를 화면 한가운데 놓는 틀
 
   // 헤더
   header: { // 맨 위 헤더 줄 — 왼쪽 로고와 오른쪽 버튼들을 양끝으로 벌려 배치

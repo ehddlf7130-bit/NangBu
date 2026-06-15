@@ -142,9 +142,9 @@ export default function MyPageScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.surface }, // 옅은 회색 페이지(커뮤니티·레시피와 동일)
   content: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.lg, paddingBottom: spacing.xl },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
 
   // 헤더 + 제목
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
