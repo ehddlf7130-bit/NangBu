@@ -6,7 +6,7 @@ import type { AppNotification } from '@/types/notification';
 // comments → profiles(author_id) 모두 단일 FK라 임베드가 모호하지 않다.
 const NOTIFICATION_SELECT =
   'id, type, item_id, comment_id, actor_id, is_read, created_at, ' +
-  'item:items(id, name), ' +
+  'item:items(id, name, expire_date), ' +
   'comment:comments(id, content, author:profiles(id, display_name, username)), ' +
   'actor:profiles!actor_id(id, display_name, username)';
 

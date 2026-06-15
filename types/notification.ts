@@ -3,6 +3,7 @@ import type { CommentAuthor } from '@/types/comment';
 export interface NotificationItemRef {
   id: string;
   name: string;
+  expire_date: string | null; // YYYY-MM-DD — expiry 알림 live D-day 계산용
 }
 
 export interface NotificationCommentRef {
@@ -11,7 +12,7 @@ export interface NotificationCommentRef {
   author: CommentAuthor | null;
 }
 
-export type NotificationType = 'comment' | 'friend_accepted';
+export type NotificationType = 'comment' | 'friend_accepted' | 'expiry';
 
 export interface AppNotification {
   id: string;

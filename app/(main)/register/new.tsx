@@ -54,11 +54,12 @@ export default function RegisterNewScreen() {
     router.replace('/(main)/(tabs)' as never);
   }
 
-  // 유통기한 자동 채움: ① 개인값 → ② 마스터 일수(>0) → ③ 빈칸 (§13-7).
+  // 유통기한 자동 채움: ① ingredient_expiry 개인값 → ② 마스터 일수(>0) → ③ 빈칸.
+  // 폼 prop 시그니처는 (category, storage) 유지 — category는 개별 재료 체인에서 미사용.
   const resolveExpiry = useCallback(
-    (cat: string, storage: StorageType) =>
+    (_cat: string, storage: StorageType) =>
       user
-        ? resolveExpiryDays(user.id, cat, storage, ingredient)
+        ? resolveExpiryDays(user.id, storage, ingredient)
         : Promise.resolve(null),
     [user, ingredient],
   );

@@ -84,7 +84,7 @@ export default function NotificationSettingsScreen() {
         />
         <Row
           label="소비기한 임박 알림"
-          desc="유통기한이 다가오면 알려드려요. (준비 중)"
+          desc="유통기한이 다가오면 알려드려요."
           value={notifyExpiry}
           disabled={saving}
           onChange={(v) => toggle('expiry', v)}

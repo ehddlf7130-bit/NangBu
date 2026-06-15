@@ -26,6 +26,8 @@ import {
 } from 'react-native';
 
 const BACK_ICON_SIZE = 26;
+const MEMO_BAR_RADIUS = 12; // ⚠️ 토큰 없음 — Figma 12 (radius.sm=8·card=16 사이). 디자이너 확정 시 통합
+const MEMO_PLUS_SIZE = 20;  // ⚠️ 토큰 없음 — '＋ 메모'의 '＋' 글자 크기(Figma 20)
 
 // 재료 정보(읽기 전용) 화면.
 // 내 재료로 진입 → '편집' 버튼(편집 화면으로 이동).
@@ -121,9 +123,10 @@ function OwnerView({ item }: { item: Item }) {
       >
         <Text style={styles.editText}>편집</Text>
       </TouchableOpacity>
-      {/* ── 코멘트 목록 (읽기 전용) ── */}
+      {/* ── 메모(코멘트) 목록 (읽기 전용) ── */}
+      <View style={styles.memoDivider} />
       <View style={styles.commentSection}>
-        <Text style={styles.commentTitle}>코멘트</Text>
+        <Text style={styles.commentTitle}>메모</Text>
         <CommentCardList comments={comments} loading={commentLoading} error={commentError} />
       </View>
     </ScrollView>
@@ -178,35 +181,38 @@ function FriendView({ item, userId }: { item: Item; userId: string | null }) {
       >
         {/* ── 재료 정보 ── */}
         <ItemDetail item={item} />
-        {/* ── 코멘트 목록 ── */}
+        {/* ── 메모(코멘트) 목록 ── */}
+        <View style={styles.memoDivider} />
         <View style={styles.commentSection}>
-          <Text style={styles.commentTitle}>코멘트</Text>
+          <Text style={styles.commentTitle}>메모</Text>
           <CommentCardList comments={comments} loading={commentLoading} error={commentError} />
         </View>
       </ScrollView>
 
-      {/* ── 하단 코멘트 입력 바 (입력칸 + 작성 버튼) ── */}
+      {/* ── 하단 '새 메모 추가' 입력 바 (입력칸 + ＋메모 버튼) ── */}
       <View style={styles.inputBar}>
         <TextInput
-          style={styles.commentInput}
+          style={styles.memoInput}
           value={text}
           onChangeText={setText}
-          placeholder="코멘트를 남겨보세요"
-          placeholderTextColor={colors.textDisabled}
+          placeholder="새 메모 추가"
+          placeholderTextColor={colors.textTertiary}
           editable={!posting}
           multiline
         />
-        {/* '작성' 버튼: 전송 중이거나 입력칸이 비면 흐려지고 눌리지 않는다 */}
+        {/* '＋ 메모' 버튼: 전송 중이거나 입력칸이 비면 흐려지고 눌리지 않는다 */}
         <TouchableOpacity
-          style={[styles.postButton, (posting || !text.trim()) && styles.postButtonDisabled]}
+          style={[styles.memoButton, (posting || !text.trim()) && styles.memoButtonDisabled]}
           onPress={handlePost}
           disabled={posting || !text.trim()}
         >
-          {/* 전송 중이면 로딩 동그라미, 아니면 '작성' 글자 */}
+          {/* 전송 중이면 로딩 동그라미, 아니면 '＋ 메모' 글자 */}
           {posting ? (
-            <ActivityIndicator color={colors.background} />
+            <ActivityIndicator color={colors.primary} />
           ) : (
-            <Text style={styles.postButtonText}>작성</Text>
+            <Text style={styles.memoLabel}>
+              <Text style={styles.memoPlus}>＋</Text> 메모
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -234,40 +240,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editText: { ...typography.body, color: colors.background, fontWeight: typography.heading1.fontWeight }, // '편집' 버튼 안 글자(흰색·굵게)
-  commentSection: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs, gap: spacing.sm, marginTop: spacing.md }, // '코멘트' 제목 + 코멘트 목록을 묶는 영역
-  commentTitle: { ...typography.heading2, color: colors.textPrimary }, // '코멘트' 소제목 글자
-  inputBar: { // 친구 재료일 때 화면 맨 아래 고정되는 입력 바(입력칸 + 작성 버튼)를 가로로 배치
+  memoDivider: { height: 2, backgroundColor: colors.primary, marginTop: spacing.md }, // 재료 정보와 '메모' 섹션을 가르는 시안의 초록 강조선(풀블리드)
+  commentSection: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.sm }, // '메모' 제목 + 메모 목록을 묶는 영역
+  commentTitle: { ...typography.heading2, color: colors.textPrimary }, // '메모' 소제목 글자
+  inputBar: { // 친구 재료일 때 화면 맨 아래 고정되는 '새 메모 추가' 바(입력칸 + ＋메모 버튼). 시안: 초록 테두리 박스
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: MEMO_BAR_RADIUS,
     backgroundColor: colors.background,
   },
-  commentInput: { // 코멘트를 적는 입력칸 모양(테두리 박스)
+  memoInput: { // 메모를 적는 입력칸(바 내부, 자체 테두리 없음)
     flex: 1,
-    maxHeight: 100,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    maxHeight: 80,
+    paddingVertical: 0,
     ...typography.body,
     color: colors.textPrimary,
-    backgroundColor: colors.background,
   },
-  postButton: { // 입력칸 오른쪽 '작성' 버튼 모양(파란 박스)
-    backgroundColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 60,
-  },
-  postButtonDisabled: { opacity: 0.5 }, // 비활성(전송 중·입력칸 빔)일 때 버튼을 흐리게
-  postButtonText: { ...typography.body, color: colors.background, fontWeight: typography.heading1.fontWeight }, // '작성' 버튼 안 글자(흰색·굵게)
+  memoButton: { flexDirection: 'row', alignItems: 'center' }, // 오른쪽 '＋ 메모' 버튼(초록 글자)
+  memoButtonDisabled: { opacity: 0.4 }, // 비활성(전송 중·입력칸 빔)일 때 흐리게
+  memoLabel: { ...typography.body, color: colors.primary, fontWeight: '700' }, // '메모' 글자(초록·굵게)
+  memoPlus: { fontSize: MEMO_PLUS_SIZE, color: colors.primary, fontWeight: '700' }, // '＋' 기호(조금 큼)
   errorText: { ...typography.body, color: colors.danger }, // 에러 메시지 글자(빨간색)
 });

@@ -3,6 +3,7 @@
 // 각 행: 썸네일 + 제목/본문 + 시간, 안 읽음이면 파란 점. 탭하면 읽음 처리 후 관련 화면(친구/재료)으로 이동.
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { DDAY_DANGER_THRESHOLD, getDday, getDdayColor } from '@/lib/expiry';
 import { formatRelativeTime } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/items';
 import { fetchNotifications, markNotificationRead } from '@/lib/notifications';
@@ -22,12 +23,28 @@ import {
 const THUMB_SIZE = 40; // 시안 고정 치수
 const UNREAD_DOT_SIZE = 7;
 const BACK_ICON_SIZE = 26;
+const EXPIRY_ICON_SIZE = 22; // expiry 썸네일 안 시계 아이콘 크기(THUMB_SIZE 안에 들어가도록)
 
 // 타입별 제목/본문 생성. (타입·라우팅·읽음 로직은 그대로, 시안 레이아웃에 맞춰 제목/본문으로만 분리)
 function notificationContent(n: AppNotification): { title: string; body: string | null } {
   if (n.type === 'friend_accepted') {
     const actorName = n.actor?.display_name ?? '친구';
     return { title: `${actorName}님과 친구가 되었어요`, body: '친구 요청을 수락했어요.' };
+  }
+  if (n.type === 'expiry') {
+    const itemName = n.item?.name ?? '재료';
+    const title = `${itemName} 소비기한 알림`;
+    // expire_date가 임베드돼 있으면 live로 D-day를 계산해 문구를 만든다(음수/0/양수 모두 처리).
+    const expireDate = n.item?.expire_date;
+    if (!expireDate) return { title, body: '소비기한을 확인해 주세요' };
+    const dday = getDday(expireDate);
+    const body =
+      dday < 0
+        ? `소비기한이 ${Math.abs(dday)}일 지났어요`
+        : dday === 0
+          ? '오늘까지예요'
+          : `${dday}일 남았어요`;
+    return { title, body };
   }
   // comment
   const author = n.comment?.author?.display_name ?? '친구';
@@ -136,8 +153,12 @@ function NotificationRow({
   return (
     // 행 전체가 버튼 — 누르면 onPress 실행(읽음 처리 후 관련 화면으로 이동)
     <TouchableOpacity style={styles.row} onPress={onPress}>
-      {/* 왼쪽: 정사각형 썸네일 자리(지금은 단색) */}
-      <View style={styles.thumb} />
+      {/* 왼쪽: 정사각형 썸네일 자리. expiry 알림만 시계 아이콘으로 분기 렌더(나머지는 단색) */}
+      {notification.type === 'expiry' ? (
+        <ExpiryThumb expireDate={notification.item?.expire_date ?? null} />
+      ) : (
+        <View style={styles.thumb} />
+      )}
 
       {/* 오른쪽 본문 영역 */}
       <View style={styles.rowMain}>
@@ -156,6 +177,19 @@ function NotificationRow({
         ) : null}
       </View>
     </TouchableOpacity>
+  );
+}
+
+// expiry 알림 전용 썸네일: 단색 사각형 대신 시계(alarm) 아이콘 + D-day 상태 tint 배경.
+// 색/배경은 getDdayColor 임계값을 그대로 따른다(임박할수록 danger). expire_date가 없으면 warning 기본.
+function ExpiryThumb({ expireDate }: { expireDate: string | null }) {
+  const dday = expireDate != null ? getDday(expireDate) : null;
+  const iconColor = dday != null ? getDdayColor(dday) : colors.warning;
+  const tintBg = dday != null && dday <= DDAY_DANGER_THRESHOLD ? colors.dangerTint : colors.warningTint;
+  return (
+    <View style={[styles.thumb, styles.expiryThumb, { backgroundColor: tintBg }]}>
+      <Ionicons name="alarm-outline" size={EXPIRY_ICON_SIZE} color={iconColor} />
+    </View>
   );
 }
 
@@ -208,6 +242,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.thumbnail,
   },
+  expiryThumb: { alignItems: 'center', justifyContent: 'center' }, // expiry 썸네일 — 아이콘을 가운데 정렬(배경색은 D-day에 따라 인라인 지정)
   rowMain: { flex: 1, marginLeft: spacing.md, gap: spacing.xs }, // 썸네일 오른쪽 본문 묶음(제목줄 + 본문줄)
   titleLine: { // 제목줄 — 왼쪽(점+제목)과 오른쪽(시간)을 양끝으로 배치
     flexDirection: 'row',
