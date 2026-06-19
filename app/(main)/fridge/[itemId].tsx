@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -50,21 +51,29 @@ export default function ItemDetailScreen() {
   }
 
   function handleDelete() {
-    Alert.alert('품목 삭제', `"${item?.name}"을(를) 삭제하시겠습니까?`, [
+    if (!itemId) return;
+    const message = `"${item?.name}"을(를) 삭제하시겠습니까?`;
+
+    // 실제 삭제 실행 (확인 후 호출). 웹은 Alert 버튼 콜백이 동작하지 않아 window.alert로 에러 표시.
+    const doDelete = async () => {
+      try {
+        await deleteItem(itemId);
+        router.replace('/(main)/(tabs)' as never);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : '삭제에 실패했습니다.';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') window.alert(msg);
+        else Alert.alert('오류', msg);
+      }
+    };
+
+    // 웹에서는 Alert.alert의 버튼 콜백이 동작하지 않으므로 window.confirm으로 분기.
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(message)) doDelete();
+      return;
+    }
+    Alert.alert('품목 삭제', message, [
       { text: '취소', style: 'cancel' },
-      {
-        text: '삭제',
-        style: 'destructive',
-        onPress: async () => {
-          if (!itemId) return;
-          try {
-            await deleteItem(itemId);
-            router.replace('/(main)/(tabs)' as never);
-          } catch (e: unknown) {
-            Alert.alert('오류', e instanceof Error ? e.message : '삭제에 실패했습니다.');
-          }
-        },
-      },
+      { text: '삭제', style: 'destructive', onPress: doDelete },
     ]);
   }
 
